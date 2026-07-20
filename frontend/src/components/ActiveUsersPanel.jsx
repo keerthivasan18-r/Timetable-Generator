@@ -80,7 +80,7 @@ export default function ActiveUsersPanel() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginBottom: '24px' }}>
+      <div className="grid-stats dashboard-grid" style={{ marginBottom: '24px' }}>
         {[
           { label: 'Online Now',       value: activeCount,   icon: <Activity size={18} style={{ color: 'var(--green-light)' }} />,  color: 'green',  sub: 'Currently active sessions' },
           { label: 'Total Sessions',   value: sessions.length, icon: <Users size={18} style={{ color: 'var(--blue-light)' }} />,    color: 'blue',   sub: 'All tracked logins' },

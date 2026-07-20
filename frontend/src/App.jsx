@@ -9,6 +9,8 @@ import {
   GraduationCap, Lock, Eye, EyeOff, ArrowRight, Clock,
   ChevronRight, Cpu, RefreshCw
 } from 'lucide-react';
+import { SidebarProvider, useSidebar } from './components/SidebarContext';
+import { ResponsiveSidebar, FloatingMenuButton } from './components/ResponsiveSidebar';
 
 // ─── Theme Persistence ────────────────────────────────────────────────────────
 function getStoredTheme() {
@@ -44,6 +46,14 @@ const PAGE_TITLES = {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
+  return (
+    <SidebarProvider>
+      <AppContent />
+    </SidebarProvider>
+  );
+}
+
+function AppContent() {
   const [user, setUser] = useState(() => db.getCurrentUser());
   const [theme, setTheme] = useState(getStoredTheme);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -367,108 +377,34 @@ export default function App() {
   // ════════════════════════════════════════════════════════════════════════════
   const currentPageTitle = PAGE_TITLES[activeTab] || 'Dashboard';
 
+  const { isDesktop, isTablet, isMobile, tabletExpanded } = useSidebar();
+
+  let layoutClass = 'layout-desktop';
+  if (isMobile) {
+    layoutClass = 'layout-mobile';
+  } else if (isTablet) {
+    layoutClass = 'layout-tablet';
+    if (tabletExpanded) {
+      layoutClass = 'layout-tablet layout-tablet-expanded';
+    }
+  }
+
   return (
-    <div className="app-container">
+    <div className={`app-container ${layoutClass}`}>
+      <FloatingMenuButton />
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside className="sidebar slide-in-left" role="navigation" aria-label="Main navigation">
-        <div className="sidebar-inner">
-          {/* Logo */}
-          <div className="sidebar-logo">
-            <div className="sidebar-logo-icon">
-              <Calendar size={20} />
-            </div>
-            <div className="sidebar-logo-text">
-              <span className="sidebar-logo-name">ChronoAI</span>
-              <span className="sidebar-logo-sub">Timetable System</span>
-            </div>
-          </div>
-
-          {/* Nav */}
-          <nav className="sidebar-nav">
-            {user.role === 'hod' && (
-              <div className="sidebar-section-label">Core</div>
-            )}
-
-            {navItems.slice(0, user.role === 'hod' ? 4 : navItems.length).map(item => (
-              <button
-                key={item.id}
-                id={`nav-${item.id}`}
-                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                data-color={NAV_COLORS[item.id] || 'blue'}
-                onClick={() => navigate(item.id)}
-                aria-current={activeTab === item.id ? 'page' : undefined}
-              >
-                <span className="nav-item-icon">{item.icon}</span>
-                <span>{item.label}</span>
-                {item.badge && <span className="nav-badge">{item.badge}</span>}
-              </button>
-            ))}
-
-            {user.role === 'hod' && (
-              <>
-                <div className="sidebar-section-label">System</div>
-                {navItems.slice(4).map(item => (
-                  <button
-                    key={item.id}
-                    id={`nav-${item.id}`}
-                    className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                    data-color={NAV_COLORS[item.id] || 'blue'}
-                    onClick={() => navigate(item.id)}
-                    aria-current={activeTab === item.id ? 'page' : undefined}
-                  >
-                    <span className="nav-item-icon">{item.icon}</span>
-                    <span>{item.label}</span>
-                    {item.badge && <span className="nav-badge">{item.badge}</span>}
-                  </button>
-                ))}
-              </>
-            )}
-          </nav>
-
-          {/* Footer */}
-          <div className="sidebar-footer">
-            {/* Theme toggle */}
-            <button
-              id="theme-toggle"
-              onClick={toggleTheme}
-              className="nav-item"
-              style={{ color: 'var(--text-muted)' }}
-              aria-label="Toggle color theme"
-            >
-              <span className="nav-item-icon">
-                {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-              </span>
-              <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
-
-            <div className="sidebar-divider" />
-
-            {/* User chip */}
-            <div className="user-profile-card">
-              <div className="user-avatar">
-                {getInitials(user.name || 'User')}
-              </div>
-              <div className="user-info">
-                <div className="user-name">{user.name}</div>
-                <div className="user-role">
-                  {user.role === 'hod' ? 'HOD Administrator' : `Staff · ${user.id}`}
-                </div>
-              </div>
-            </div>
-
-            {/* Sign out */}
-            <button
-              id="sign-out"
-              className="nav-item logout"
-              onClick={handleLogout}
-              aria-label="Sign out"
-            >
-              <span className="nav-item-icon"><LogOut size={17} /></span>
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </div>
-      </aside>
+      <ResponsiveSidebar
+        user={user}
+        activeTab={activeTab}
+        navigate={navigate}
+        navItems={navItems}
+        NAV_COLORS={NAV_COLORS}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        handleLogout={handleLogout}
+        unreadCount={unreadCount}
+        getInitials={getInitials}
+      />
 
       {/* ── Topbar ───────────────────────────────────────────────────────── */}
       <header className="topbar" role="banner">

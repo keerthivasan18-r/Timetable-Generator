@@ -162,7 +162,7 @@ export default function LabScheduler() {
       </div>
 
       {/* Stats row */}
-      <div className="grid-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginBottom: '20px' }}>
+      <div className="grid-stats dashboard-grid" style={{ marginBottom: '20px' }}>
         <div className="stat-card indigo">
           <div className="stat-card-icon"><FlaskConical size={18} style={{ color: 'var(--indigo-light)' }} /></div>
           <div className="stat-card-value">{labSlots.length}</div>
@@ -390,7 +390,7 @@ export default function LabScheduler() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+            <div className="form-button-group justify-end" style={{ marginTop: '16px' }}>
               <button className="btn btn-secondary" onClick={() => setEditSlot(null)}>Cancel</button>
               <button
                 className="btn btn-primary"

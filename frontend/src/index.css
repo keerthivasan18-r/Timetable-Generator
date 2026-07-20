@@ -2425,3 +2425,336 @@ textarea.input-field {
   .grid-stats { grid-template-columns: 1fr 1fr; }
   .role-cards-container { grid-template-columns: 1fr; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   CHRONOAI RESPONSIVE SYSTEM OVERRIDES
+   ══════════════════════════════════════════════════════════════ */
+
+/* Images */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+/* Tables scrollable container */
+.table-container {
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Form Buttons Stacking */
+.form-button-group {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+.form-button-group.justify-end {
+  justify-content: flex-end !important;
+}
+@media (max-width: 768px) {
+  .form-button-group {
+    flex-direction: column !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+  }
+  .form-button-group button {
+    width: 100% !important;
+  }
+}
+
+/* Typography responsive overrides */
+@media (min-width: 1024px) {
+  h1, h2, h3, h4, h5, h6, .page-header h1 {
+    font-size: 20px !important;
+  }
+  body, .custom-table, .nav-item {
+    font-size: 16px !important;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  h1, h2, h3, h4, h5, h6, .page-header h1 {
+    font-size: 18px !important;
+  }
+  body, .custom-table, .nav-item {
+    font-size: 15px !important;
+  }
+}
+@media (max-width: 767px) {
+  h1, h2, h3, h4, h5, h6, .page-header h1 {
+    font-size: 16px !important;
+  }
+  body, .custom-table, .nav-item {
+    font-size: 14px !important;
+  }
+}
+
+/* Stats Cards Grid columns responsive */
+.dashboard-grid {
+  display: grid !important;
+  gap: 20px !important;
+}
+@media (min-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Dynamic shifting classes controlled by React on .app-container */
+.app-container.layout-desktop .main-content {
+  margin-left: 280px;
+  width: calc(100% - 280px);
+}
+.app-container.layout-desktop .topbar {
+  left: 280px;
+}
+
+.app-container.layout-tablet .main-content {
+  margin-left: 80px;
+  width: calc(100% - 80px);
+}
+.app-container.layout-tablet .topbar {
+  left: 80px;
+}
+
+.app-container.layout-tablet.layout-tablet-expanded .main-content {
+  margin-left: 280px;
+  width: calc(100% - 280px);
+}
+.app-container.layout-tablet.layout-tablet-expanded .topbar {
+  left: 280px;
+}
+
+.app-container.layout-mobile .main-content {
+  margin-left: 0;
+  width: 100%;
+}
+.app-container.layout-mobile .topbar {
+  left: 0;
+}
+
+/* Desktop Sidebar Overrides */
+.desktop-sidebar {
+  width: 280px !important;
+  display: flex !important;
+}
+
+/* Tablet Sidebar styling */
+.app-container.layout-tablet .tablet-sidebar {
+  width: 80px !important;
+  display: flex !important;
+  transition: width 300ms ease-in-out, background var(--t-slow) !important;
+  z-index: 200;
+  overflow: visible !important;
+}
+
+.app-container.layout-tablet .tablet-sidebar:hover,
+.app-container.layout-tablet .tablet-sidebar.toggled-expanded {
+  width: 280px !important;
+}
+
+/* Toggle button styling for Tablet Sidebar */
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 18px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--sidebar-border);
+  background: var(--sidebar-bg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 210;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--t-fast);
+}
+.sidebar-toggle-btn:hover {
+  border-color: var(--blue-light);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+/* Tablet Sidebar Text hiding & revealing */
+.tablet-sidebar .sidebar-logo-text,
+.tablet-sidebar .sidebar-section-label,
+.tablet-sidebar .nav-item-label,
+.tablet-sidebar .user-info {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease-in-out;
+  white-space: nowrap;
+}
+
+.tablet-sidebar:hover .sidebar-logo-text,
+.tablet-sidebar:hover .sidebar-section-label,
+.tablet-sidebar:hover .nav-item-label,
+.tablet-sidebar:hover .user-info,
+.tablet-sidebar.toggled-expanded .sidebar-logo-text,
+.tablet-sidebar.toggled-expanded .sidebar-section-label,
+.tablet-sidebar.toggled-expanded .nav-item-label,
+.tablet-sidebar.toggled-expanded .user-info {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Adjust layout alignment for collapsed states */
+.tablet-sidebar .user-profile-card {
+  padding: 8px 0 !important;
+  justify-content: center !important;
+}
+.tablet-sidebar:hover .user-profile-card,
+.tablet-sidebar.toggled-expanded .user-profile-card {
+  padding: 8px 12px !important;
+  justify-content: flex-start !important;
+}
+
+/* Mobile Drawer styling */
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 85%;
+  max-width: 320px;
+  height: 100vh;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  z-index: 1000;
+  transform: translate3d(-100%, 0, 0);
+  transition: transform 300ms ease-in-out;
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-drawer.open {
+  transform: translate3d(0, 0, 0);
+}
+
+.mobile-drawer-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px 0;
+}
+
+.drawer-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  transition: all var(--t-fast);
+}
+.drawer-close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Floating Circular Hamburger Button styling */
+.floating-hamburger-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50% !important;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999 !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18) !important;
+  transition: all 300ms ease-in-out;
+  outline: none;
+}
+
+.floating-hamburger-btn:hover {
+  transform: scale(1.05);
+  background: var(--bg-hover);
+}
+
+.floating-hamburger-btn:active {
+  transform: scale(0.95);
+}
+
+/* Hamburger Icon Wrapper */
+.hamburger-icon-wrapper {
+  width: 24px;
+  height: 18px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Hamburger Lines */
+.hamburger-line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: transform 300ms ease-in-out, opacity 300ms ease-in-out, background-color 300ms ease-in-out;
+  will-change: transform, opacity;
+}
+
+/* Morph Animations into X */
+.hamburger-icon-wrapper.open .line-1 {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-icon-wrapper.open .line-2 {
+  opacity: 0;
+}
+
+.hamburger-icon-wrapper.open .line-3 {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Shift Topbar in layout-mobile to prevent overlap */
+.app-container.layout-mobile .topbar {
+  padding-left: 92px !important;
+  transition: left var(--t-med), padding-left 300ms ease-in-out, background var(--t-slow) !important;
+}
+
+/* Backdrop */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 990;
+  animation: fadeIn 300ms ease both;
+}
+

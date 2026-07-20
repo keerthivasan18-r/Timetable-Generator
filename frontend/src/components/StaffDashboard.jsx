@@ -125,7 +125,7 @@ export default function StaffDashboard({ user }) {
         </div>
 
         {/* Quick stats */}
-        <div className="grid-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+         <div className="grid-stats dashboard-grid">
           {[
             {
               label: 'Weekly Periods', value: hasPublished ? countPeriods() : '—',

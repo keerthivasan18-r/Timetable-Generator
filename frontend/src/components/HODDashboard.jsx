@@ -385,7 +385,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
         )}
 
         {/* Stats grid */}
-        <div className="grid-stats" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))' }}>
+        <div className="grid-stats dashboard-grid">
           {[
             { label: 'Total Sections', value: 6, sub: '1-A, 1-B, 2-A, 2-B, 3-A, 3-B', icon: <Layers size={18} style={{ color: 'var(--blue-light)' }} />, color: 'blue' },
             { label: 'Faculty Count', value: staff.length, sub: 'Teaching staff on roster', icon: <Users size={18} style={{ color: 'var(--purple-light)' }} />, color: 'purple' },
@@ -588,7 +588,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
                   })}
                 </select>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+              <div className="form-button-group justify-end" style={{ marginTop: '16px' }}>
                 <button className="btn btn-secondary" onClick={() => setEditingCell(null)}>Cancel</button>
               </div>
             </div>
@@ -650,7 +650,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
                 <input type="text" className="input-field" placeholder="e.g. Staff@123"
                   value={staffPwd} onChange={e => setStaffPwd(e.target.value)} />
               </div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <div className="form-button-group" style={{ marginTop: '4px' }}>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
                   <Plus size={15} /> {editingStaffId ? 'Save Changes' : 'Add Staff Member'}
                 </button>
@@ -1107,7 +1107,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '20px' }}>
+                <div className="form-button-group justify-end" style={{ marginTop: '20px' }}>
                   <button type="button" className="btn btn-secondary" onClick={closeEditModal}>Cancel</button>
                   <button type="submit" className="btn btn-primary">
                     <Save size={14} /> Save Changes
