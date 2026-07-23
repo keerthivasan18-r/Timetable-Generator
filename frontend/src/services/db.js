@@ -215,7 +215,15 @@ export const db = {
   },
 
   getCurrentUser() {
-    return LS.get('_currentUser');
+    try {
+      const u = LS.get('_currentUser');
+      if (u && typeof u === 'object' && u.role) return u;
+      LS.remove('_currentUser');
+      return null;
+    } catch {
+      LS.remove('_currentUser');
+      return null;
+    }
   },
 
   // ── Staff ───────────────────────────────────────────────────────────────────
