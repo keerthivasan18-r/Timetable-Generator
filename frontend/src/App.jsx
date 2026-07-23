@@ -356,8 +356,6 @@ function AppContent() {
                 <div className="fade-in" style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {[
                     { role: 'hod',   id: 'hod@college.edu', pwd: 'Admin123',      label: '🛡 HOD Admin',          sub: 'Full system access' },
-                    { role: 'staff', id: 'STF001',          pwd: 'StaffPassword1', label: '👩‍🏫 Sangeetha',          sub: 'Java & Lab instructor' },
-                    { role: 'staff', id: 'STF004',          pwd: 'StaffPassword4', label: '👨‍🏫 Murugan',            sub: 'Shared across sections' },
                   ].map((acct, i) => (
                     <button key={i} onClick={() => fillDemo(acct.role, acct.id, acct.pwd)} className="demo-account-btn">
                       <span className="demo-account-btn-name">{acct.label}</span>

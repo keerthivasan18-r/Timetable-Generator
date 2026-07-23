@@ -34,115 +34,30 @@ const DEFAULT_SETTINGS = {
   }
 };
 
-const DEFAULT_STAFF = [
-  { id: 'STF001', name: 'Sangeetha', email: 'sangeetha@college.edu', password: 'StaffPassword1' },
-  { id: 'STF002', name: 'Tamilarasi', email: 'tamilarasi@college.edu', password: 'StaffPassword2' },
-  { id: 'STF003', name: 'Vijaya', email: 'vijaya@college.edu', password: 'StaffPassword3' },
-  { id: 'STF004', name: 'Murugan', email: 'murugan@college.edu', password: 'StaffPassword4' },
-  { id: 'STF005', name: 'Archana', email: 'archana@college.edu', password: 'StaffPassword5' },
-  { id: 'STF006', name: 'Sudha', email: 'sudha@college.edu', password: 'StaffPassword6' },
-  { id: 'STF007', name: 'Dharani', email: 'dharani@college.edu', password: 'StaffPassword7' },
-  { id: 'STF008', name: 'Vadivel Murugan', email: 'vadivel@college.edu', password: 'StaffPassword8' },
-  { id: 'STF009', name: 'Vidhya', email: 'vidhya@college.edu', password: 'StaffPassword9' }
-];
-
-const DEFAULT_SUBJECTS = [
-  { id: 'CS101', name: 'Java', type: 'theory', periods: 4, year: 'First Year' },
-  { id: 'CS102', name: 'Operating Systems', type: 'theory', periods: 4, year: 'First Year' },
-  { id: 'CS103', name: 'Java Lab', type: 'practical', periods: 4, year: 'First Year' },
-  { id: 'CS104', name: 'Mathematics', type: 'theory', periods: 4, year: 'First Year' },
-  { id: 'CS105', name: 'Tamil', type: 'language', periods: 6, year: 'First Year' },
-  { id: 'CS106', name: 'English', type: 'language', periods: 6, year: 'First Year' },
-  { id: 'CS107', name: 'Soft Skills', type: 'theory', periods: 2, year: 'First Year' },
-  { id: 'CS108', name: 'Statistics', type: 'theory', periods: 4, year: 'First Year' },
-  { id: 'CS201', name: 'Python', type: 'theory', periods: 4, year: 'Second Year' },
-  { id: 'CS202', name: 'Python Lab', type: 'practical', periods: 4, year: 'Second Year' },
-  { id: 'CS203', name: 'DBMS', type: 'theory', periods: 4, year: 'Second Year' },
-  { id: 'CS204', name: 'DBMS Lab', type: 'practical', periods: 4, year: 'Second Year' },
-  { id: 'CS205', name: 'Tamil', type: 'language', periods: 6, year: 'Second Year' },
-  { id: 'CS206', name: 'English', type: 'language', periods: 6, year: 'Second Year' },
-  { id: 'CS207', name: 'Mathematics', type: 'theory', periods: 4, year: 'Second Year' },
-  { id: 'CS208', name: 'Statistics', type: 'theory', periods: 4, year: 'Second Year' },
-  { id: 'CS301', name: 'Computer Networks', type: 'theory', periods: 4, year: 'Third Year' },
-  { id: 'CS302', name: 'Networks Lab', type: 'practical', periods: 4, year: 'Third Year' },
-  { id: 'CS303', name: 'Web Technology', type: 'theory', periods: 4, year: 'Third Year' },
-  { id: 'CS304', name: 'Web Tech Lab', type: 'practical', periods: 4, year: 'Third Year' },
-  { id: 'CS305', name: 'Tamil', type: 'language', periods: 6, year: 'Third Year' },
-  { id: 'CS306', name: 'English', type: 'language', periods: 6, year: 'Third Year' },
-  { id: 'CS307', name: 'Mathematics', type: 'theory', periods: 4, year: 'Third Year' },
-  { id: 'CS308', name: 'Statistics', type: 'theory', periods: 4, year: 'Third Year' }
-];
-
-const DEFAULT_ASSIGNMENTS = [
-  { section: '1-A', subjectId: 'CS101', staffId: 'STF001' },
-  { section: '1-A', subjectId: 'CS102', staffId: 'STF002' },
-  { section: '1-A', subjectId: 'CS103', staffId: 'STF001' },
-  { section: '1-A', subjectId: 'CS104', staffId: 'STF003' },
-  { section: '1-A', subjectId: 'CS105', staffId: 'STF004' },
-  { section: '1-A', subjectId: 'CS106', staffId: 'STF005' },
-  { section: '1-A', subjectId: 'CS107', staffId: 'STF005' },
-  { section: '1-A', subjectId: 'CS108', staffId: 'STF006' },
-  { section: '1-B', subjectId: 'CS101', staffId: 'STF006' },
-  { section: '1-B', subjectId: 'CS102', staffId: 'STF007' },
-  { section: '1-B', subjectId: 'CS103', staffId: 'STF006' },
-  { section: '1-B', subjectId: 'CS104', staffId: 'STF004' },
-  { section: '1-B', subjectId: 'CS105', staffId: 'STF008' },
-  { section: '1-B', subjectId: 'CS106', staffId: 'STF009' },
-  { section: '1-B', subjectId: 'CS107', staffId: 'STF009' },
-  { section: '1-B', subjectId: 'CS108', staffId: 'STF007' },
-  { section: '2-A', subjectId: 'CS201', staffId: 'STF001' },
-  { section: '2-A', subjectId: 'CS202', staffId: 'STF002' },
-  { section: '2-A', subjectId: 'CS203', staffId: 'STF003' },
-  { section: '2-A', subjectId: 'CS204', staffId: 'STF004' },
-  { section: '2-A', subjectId: 'CS205', staffId: 'STF004' },
-  { section: '2-A', subjectId: 'CS206', staffId: 'STF005' },
-  { section: '2-A', subjectId: 'CS207', staffId: 'STF003' },
-  { section: '2-A', subjectId: 'CS208', staffId: 'STF009' },
-  { section: '2-B', subjectId: 'CS201', staffId: 'STF005' },
-  { section: '2-B', subjectId: 'CS202', staffId: 'STF006' },
-  { section: '2-B', subjectId: 'CS203', staffId: 'STF007' },
-  { section: '2-B', subjectId: 'CS204', staffId: 'STF008' },
-  { section: '2-B', subjectId: 'CS205', staffId: 'STF008' },
-  { section: '2-B', subjectId: 'CS206', staffId: 'STF009' },
-  { section: '2-B', subjectId: 'CS207', staffId: 'STF004' },
-  { section: '2-B', subjectId: 'CS208', staffId: 'STF007' },
-  { section: '3-A', subjectId: 'CS301', staffId: 'STF001' },
-  { section: '3-A', subjectId: 'CS302', staffId: 'STF002' },
-  { section: '3-A', subjectId: 'CS303', staffId: 'STF003' },
-  { section: '3-A', subjectId: 'CS304', staffId: 'STF004' },
-  { section: '3-A', subjectId: 'CS305', staffId: 'STF004' },
-  { section: '3-A', subjectId: 'CS306', staffId: 'STF005' },
-  { section: '3-A', subjectId: 'CS307', staffId: 'STF003' },
-  { section: '3-A', subjectId: 'CS308', staffId: 'STF001' },
-  { section: '3-B', subjectId: 'CS301', staffId: 'STF005' },
-  { section: '3-B', subjectId: 'CS302', staffId: 'STF006' },
-  { section: '3-B', subjectId: 'CS303', staffId: 'STF007' },
-  { section: '3-B', subjectId: 'CS304', staffId: 'STF008' },
-  { section: '3-B', subjectId: 'CS305', staffId: 'STF008' },
-  { section: '3-B', subjectId: 'CS306', staffId: 'STF009' },
-  { section: '3-B', subjectId: 'CS307', staffId: 'STF006' },
-  { section: '3-B', subjectId: 'CS308', staffId: 'STF002' }
-];
+const DEFAULT_STAFF = [];
+const DEFAULT_SUBJECTS = [];
+const DEFAULT_ASSIGNMENTS = [];
 
 // Initialise localStorage fallback defaults
 function initLocalFallback() {
-  if (!LS.get('_staff')) LS.set('_staff', DEFAULT_STAFF);
-  if (!LS.get('_subjects')) LS.set('_subjects', DEFAULT_SUBJECTS);
-  if (!LS.get('_assignments')) {
-    const assignmentsWithIds = DEFAULT_ASSIGNMENTS.map((a, idx) => ({
-      id: idx + 1,
-      ...a
-    }));
-    LS.set('_assignments', assignmentsWithIds);
+  const currentStaff = LS.get('_staff');
+  if (!currentStaff || (Array.isArray(currentStaff) && currentStaff.some(s => s.id === 'STF001' || s.name === 'Sangeetha'))) {
+    LS.set('_staff', []);
+  }
+  const currentSubjects = LS.get('_subjects');
+  if (!currentSubjects || (Array.isArray(currentSubjects) && currentSubjects.some(s => s.id === 'CS101' || s.name === 'Java'))) {
+    LS.set('_subjects', []);
+  }
+  const currentAssignments = LS.get('_assignments');
+  if (!currentAssignments || (Array.isArray(currentAssignments) && currentAssignments.some(a => a.staffId === 'STF001' || a.subjectId === 'CS101'))) {
+    LS.set('_assignments', []);
   }
   if (!LS.get('_settings')) LS.set('_settings', DEFAULT_SETTINGS);
   if (!LS.get('_timetable')) LS.set('_timetable', { status: 'draft', tables: null });
   if (!LS.get('_labSlots')) LS.set('_labSlots', []);
   if (!LS.get('_emailLogs')) LS.set('_emailLogs', []);
   if (!LS.get('_sessions')) LS.set('_sessions', []);
-  if (!LS.get('_notifications')) LS.set('_notifications', [
-    { id: 'N001', title: 'System Ready', message: 'ChronoAI timetable system initialized (offline mode).', recipient_id: 'all', created_at: new Date().toISOString() }
-  ]);
+  if (!LS.get('_notifications')) LS.set('_notifications', []);
 }
 
 initLocalFallback();

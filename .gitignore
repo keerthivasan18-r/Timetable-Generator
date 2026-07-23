@@ -24,3 +24,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# SQLite temporary WAL/SHM files
+*.sqlite-shm
+*.sqlite-wal
+

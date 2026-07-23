@@ -571,7 +571,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
             <div className="empty-state">
               <Calendar size={64} className="empty-state-icon" />
               <h3>No Timetable Generated</h3>
-              <p>Assign staff to all subjects, then click "Generate Schedule" to create an automatic, conflict-free timetable.</p>
+              <p>Generate a timetable after adding staff and assigning all required subjects.</p>
             </div>
             <button className="btn btn-primary" onClick={handleGenerate} style={{ marginTop: '20px' }}>
               <Zap size={15} /> Run Auto-Scheduler
@@ -719,8 +719,8 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
             {staff.length === 0 ? (
               <div className="empty-state">
                 <Users size={48} className="empty-state-icon" />
-                <h3>No staff members yet</h3>
-                <p>Add your first staff member using the form above.</p>
+                <h3>No Staff Available</h3>
+                <p>No staff members found. Click "Add Staff Member" to create your first faculty member.</p>
               </div>
             ) : (
               <table className="custom-table">
@@ -990,7 +990,8 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
             {filteredSubjects.length === 0 && (
               <div className="empty-state" style={{ padding: '32px 24px' }}>
                 <BookOpen size={36} className="empty-state-icon" />
-                <p style={{ fontSize: '0.845rem' }}>No courses found matching your filters.</p>
+                <h3>No Courses Available</h3>
+                <p style={{ fontSize: '0.845rem' }}>No courses found. Click "Add Course" to begin.</p>
               </div>
             )}
           </div>
