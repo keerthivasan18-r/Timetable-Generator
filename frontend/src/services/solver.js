@@ -493,6 +493,45 @@ export function validateTimetable(tables, staff, subjects, settings) {
     }
   });
 
+  // Check Continuity for Reserved Lab Blocks on each Day
+  sections.forEach(sec => {
+    for (let day = 1; day <= dayOrdersCount; day++) {
+      const daySlotsBySubject = {};
+      for (let p = 1; p <= periodsPerDay; p++) {
+        const slot = tables[sec]?.[day]?.[p];
+        if (!slot || slot.subjectId === 'FREE') continue;
+        const sub = subjects.find(s => s.id === slot.subjectId);
+        const isLab = sub?.type === 'practical' || slot.subjectId.includes('LAB') || sub?.name.toLowerCase().includes('lab') || slot.isPreset;
+        if (isLab) {
+          if (!daySlotsBySubject[slot.subjectId]) daySlotsBySubject[slot.subjectId] = [];
+          daySlotsBySubject[slot.subjectId].push(p);
+        }
+      }
+      Object.keys(daySlotsBySubject).forEach(subId => {
+        const periods = daySlotsBySubject[subId].sort((a, b) => a - b);
+        if (periods.length > 1) {
+          let continuous = true;
+          for (let i = 0; i < periods.length - 1; i++) {
+            if (periods[i + 1] - periods[i] !== 1) {
+              continuous = false;
+              break;
+            }
+          }
+          if (!continuous) {
+            const sub = subjects.find(s => s.id === subId);
+            conflicts.push({
+              type: 'non_continuous_lab',
+              section: sec,
+              subjectId: subId,
+              day,
+              message: `Discontinuous Lab Warning: Reserved lab block for '${sub?.name || subId}' on Day ${day} in Section ${sec} is not continuous (Periods ${periods.join(', ')}).`
+            });
+          }
+        }
+      });
+    }
+  });
+
   // Check for Subject Allocation Limits
   sections.forEach(sec => {
     const secYear = getSectionYear(sec);
@@ -502,20 +541,36 @@ export function validateTimetable(tables, staff, subjects, settings) {
       if (subYear !== secYear) return;
 
       const actual = subjectPeriodCounts[`${sec}_${sub.id}`] || 0;
-      if (actual > sub.periods) {
-        conflicts.push({
-          type: 'over_allocation',
-          section: sec,
-          subjectId: sub.id,
-          message: `Section ${sec} has scheduled '${sub.name}' for ${actual} periods, but the weekly allocation is only ${sub.periods} periods.`
-        });
-      } else if (actual < sub.periods) {
-        conflicts.push({
-          type: 'under_allocation',
-          section: sec,
-          subjectId: sub.id,
-          message: `Section ${sec} has scheduled '${sub.name}' for ${actual} periods, but needs ${sub.periods} periods.`
-        });
+      const isLab = sub.type === 'practical' || sub.id.includes('LAB') || sub.name.toLowerCase().includes('lab');
+
+      if (isLab) {
+        // Multiple weekly lab sessions of the same subject across different days
+        // (e.g. Mon P1-P2, Wed P4-P5, Fri P2-P3) are valid independent reserved blocks.
+        // Do NOT generate over-allocation or duplicate warnings for multiple weekly lab sessions.
+        if (actual === 0 && sub.periods > 0) {
+          conflicts.push({
+            type: 'under_allocation',
+            section: sec,
+            subjectId: sub.id,
+            message: `Section ${sec} has not scheduled any periods for lab '${sub.name}'.`
+          });
+        }
+      } else {
+        if (actual > sub.periods) {
+          conflicts.push({
+            type: 'over_allocation',
+            section: sec,
+            subjectId: sub.id,
+            message: `Section ${sec} has scheduled '${sub.name}' for ${actual} periods, but the weekly allocation is only ${sub.periods} periods.`
+          });
+        } else if (actual < sub.periods) {
+          conflicts.push({
+            type: 'under_allocation',
+            section: sec,
+            subjectId: sub.id,
+            message: `Section ${sec} has scheduled '${sub.name}' for ${actual} periods, but needs ${sub.periods} periods.`
+          });
+        }
       }
     });
   });

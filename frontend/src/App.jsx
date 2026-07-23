@@ -7,7 +7,7 @@ import {
   Calendar, LogOut, Users, BookOpen, Mail, Bell,
   Shield, Sun, Moon, FlaskConical, UserCheck, BarChart3,
   GraduationCap, Lock, Eye, EyeOff, ArrowRight, Clock,
-  ChevronRight, Cpu, RefreshCw
+  ChevronRight, Cpu, RefreshCw, Menu
 } from 'lucide-react';
 import { SidebarProvider, useSidebar } from './components/SidebarContext';
 import { ResponsiveSidebar, FloatingMenuButton } from './components/ResponsiveSidebar';
@@ -68,6 +68,7 @@ function AppContent() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showDemoAccounts, setShowDemoAccounts] = useState(false);
+  const { isDesktop, isTablet, isMobile, tabletExpanded, toggleSidebar, sidebarOpen } = useSidebar();
 
   useEffect(() => { applyTheme(theme); }, [theme]);
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
@@ -377,8 +378,6 @@ function AppContent() {
   // ════════════════════════════════════════════════════════════════════════════
   const currentPageTitle = PAGE_TITLES[activeTab] || 'Dashboard';
 
-  const { isDesktop, isTablet, isMobile, tabletExpanded } = useSidebar();
-
   let layoutClass = 'layout-desktop';
   if (isMobile) {
     layoutClass = 'layout-mobile';
@@ -392,6 +391,7 @@ function AppContent() {
   return (
     <div className={`app-container ${layoutClass}`}>
       <FloatingMenuButton />
+
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <ResponsiveSidebar
         user={user}
@@ -406,103 +406,126 @@ function AppContent() {
         getInitials={getInitials}
       />
 
-      {/* ── Topbar ───────────────────────────────────────────────────────── */}
-      <header className="topbar" role="banner">
-        <div className="topbar-breadcrumb">
-          <span>ChronoAI</span>
-          <ChevronRight size={13} className="topbar-breadcrumb-sep" />
-          <span className="topbar-breadcrumb-active">{currentPageTitle}</span>
-        </div>
+      {/* ── Right column: topbar + main ──────────────────────────────────── */}
+      <div className="content-area">
 
-        <div className="topbar-actions">
-          {lastSynced && (
-            <span className="topbar-synced">
-              <RefreshCw size={11} />
-              {formatLastSynced(lastSynced)}
-            </span>
+        {/* ── Topbar ─────────────────────────────────────────────────────── */}
+        <header className="topbar" role="banner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {!isDesktop && (
+              <button
+                className="topbar-icon-btn topbar-menu-btn"
+                onClick={toggleSidebar}
+                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={sidebarOpen}
+              >
+                <Menu size={18} />
+              </button>
+            )}
+            <div className="topbar-breadcrumb">
+              <span className="topbar-brand-name">ChronoAI</span>
+              <ChevronRight size={13} className="topbar-breadcrumb-sep" />
+              <span className="topbar-breadcrumb-active">{currentPageTitle}</span>
+            </div>
+          </div>
+
+          <div className="topbar-actions">
+            {lastSynced && (
+              <span className="topbar-synced">
+                <RefreshCw size={11} />
+                {formatLastSynced(lastSynced)}
+              </span>
+            )}
+
+            <button
+              className="topbar-icon-btn"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
+            <button
+              className="topbar-icon-btn"
+              onClick={() => navigate('notifications')}
+              aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+            >
+              <Bell size={16} />
+              {unreadCount > 0 && <span className="topbar-notif-dot" aria-hidden="true" />}
+            </button>
+
+            <div
+              className="user-avatar"
+              style={{ width: 32, height: 32, fontSize: '0.6875rem', cursor: 'default', flexShrink: 0 }}
+              title={user.name}
+              aria-label={`Signed in as ${user.name}`}
+            >
+              {getInitials(user.name || 'User')}
+            </div>
+          </div>
+        </header>
+
+        {/* ── Main Content ───────────────────────────────────────────────── */}
+        <main className="main-content fade-in" role="main">
+
+          {/* Notifications */}
+          {activeTab === 'notifications' && (
+            <div className="fade-in">
+              <div className="page-header">
+                <div>
+                  <h1>Notifications</h1>
+                  <p>System alerts and department announcements</p>
+                </div>
+                {unreadCount > 0 && (
+                  <span className="badge badge-orange">{unreadCount} unread</span>
+                )}
+              </div>
+
+              <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                {notifications.length === 0 ? (
+                  <div className="empty-state">
+                    <Bell size={52} className="empty-state-icon" />
+                    <h3>No notifications yet</h3>
+                    <p>System alerts and timetable updates will appear here once the HOD publishes a schedule.</p>
+                  </div>
+                ) : (
+                  notifications.map(n => (
+                    <div key={n.id} className={`notification-item ${!n.is_read ? 'unread' : ''}`}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="notification-title">{n.title}</div>
+                          <div className="notification-msg">{n.message}</div>
+                          <div className="notification-time">
+                            {new Date(n.created_at || n.date).toLocaleString()}
+                          </div>
+                        </div>
+                        {!n.is_read && (
+                          <span className="badge badge-orange" style={{ flexShrink: 0 }}>New</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           )}
 
-          <button
-            className="topbar-icon-btn"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          {/* HOD Dashboard panels */}
+          {user.role === 'hod' && activeTab !== 'notifications' && (
+            <HODDashboard
+              activePanel={activeTab}
+              triggerNotificationReload={loadNotifications}
+              onNavigateToCourses={() => setActiveTab('subjects-list')}
+            />
+          )}
 
-          <button
-            className="topbar-icon-btn"
-            onClick={() => navigate('notifications')}
-            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-            title="Notifications"
-          >
-            <Bell size={16} />
-            {unreadCount > 0 && <span className="topbar-notif-dot" aria-hidden="true" />}
-          </button>
+          {/* Staff Dashboard */}
+          {user.role === 'staff' && activeTab === 'dashboard' && (
+            <StaffDashboard user={user} />
+          )}
 
-          <div className="user-avatar" style={{ width: 32, height: 32, fontSize: '0.7rem', cursor: 'default' }} title={user.name}>
-            {getInitials(user.name || 'User')}
-          </div>
-        </div>
-      </header>
-
-      {/* ── Main Content ─────────────────────────────────────────────────── */}
-      <main className="main-content fade-in" role="main">
-        {/* Notifications */}
-        {activeTab === 'notifications' && (
-          <div className="fade-in">
-            <div className="page-header">
-              <div>
-                <h1>Notifications</h1>
-                <p>System alerts and announcements</p>
-              </div>
-              {unreadCount > 0 && (
-                <span className="badge badge-orange">{unreadCount} unread</span>
-              )}
-            </div>
-            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
-              {notifications.length === 0 ? (
-                <div className="empty-state">
-                  <Bell size={52} className="empty-state-icon" />
-                  <h3>No notifications yet</h3>
-                  <p>System alerts and timetable updates will appear here.</p>
-                </div>
-              ) : (
-                notifications.map(n => (
-                  <div key={n.id} className="notification-item">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                      <div>
-                        <div className="notification-title">{n.title}</div>
-                        <div className="notification-msg">{n.message}</div>
-                        <div className="notification-time">
-                          {new Date(n.created_at || n.date).toLocaleString()}
-                        </div>
-                      </div>
-                      {!n.is_read && (
-                        <span className="badge badge-orange" style={{ flexShrink: 0 }}>New</span>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* HOD Dashboard panels */}
-        {user.role === 'hod' && activeTab !== 'notifications' && (
-          <HODDashboard
-            activePanel={activeTab}
-            triggerNotificationReload={loadNotifications}
-          />
-        )}
-
-        {/* Staff Dashboard */}
-        {user.role === 'staff' && activeTab === 'dashboard' && (
-          <StaffDashboard user={user} />
-        )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,37 @@
 import express from 'express';
 import pool from '../db/connection.js';
+import { validateSchedulerData } from '../services/validationService.js';
 
 const router = express.Router();
+
+// POST /api/timetable/validate — Production-grade pre-generation validation
+router.post('/validate', async (req, res) => {
+  try {
+    let { staff, subjects, assignments, settings } = req.body || {};
+
+    // If payload elements are missing, fetch current database state directly
+    if (!staff || !subjects || !assignments) {
+      const [staffRows] = await pool.query('SELECT id, name, email FROM staff');
+      const [subjectRows] = await pool.query('SELECT id, name, type, periods, year FROM subjects');
+      const [asgnRows] = await pool.query('SELECT section, subject_id AS subjectId, staff_id AS staffId FROM assignments');
+      const [settingsRows] = await pool.query('SELECT periods_per_day, day_orders_count FROM settings LIMIT 1');
+
+      staff = staffRows;
+      subjects = subjectRows;
+      assignments = asgnRows;
+      settings = settingsRows[0] || {};
+    }
+
+    const result = validateSchedulerData({ staff, subjects, assignments, settings });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      canGenerate: false,
+      errors: [{ section: 'System', subject: 'System', faculty: 'System', weeklyHours: 0, type: 'Internal Error', error: err.message }]
+    });
+  }
+});
 
 // GET /api/timetable
 router.get('/', async (req, res) => {
@@ -81,3 +111,4 @@ router.post('/publish', async (req, res) => {
 });
 
 export default router;
+

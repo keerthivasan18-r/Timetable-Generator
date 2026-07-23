@@ -53,23 +53,32 @@ export const DesktopSidebar = React.memo((props) => {
 });
 
 export const TabletSidebar = React.memo((props) => {
-  const { tabletExpanded, setTabletExpanded } = useSidebar();
+  const { tabletExpanded, setTabletExpanded, sidebarOpen, closeSidebar } = useSidebar();
 
   return (
-    <aside
-      className={`sidebar tablet-sidebar slide-in-left ${tabletExpanded ? 'toggled-expanded' : ''}`}
-      role="navigation"
-      aria-label="Tablet navigation"
-    >
-      <button
-        className="sidebar-toggle-btn"
-        onClick={() => setTabletExpanded(!tabletExpanded)}
-        aria-label={tabletExpanded ? "Collapse sidebar" : "Expand sidebar"}
+    <>
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`sidebar tablet-sidebar slide-in-left ${sidebarOpen ? 'open' : ''} ${tabletExpanded ? 'toggled-expanded' : ''}`}
+        role="navigation"
+        aria-label="Tablet navigation"
       >
-        {tabletExpanded ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
-      </button>
-      <SidebarContent {...props} />
-    </aside>
+        <button
+          className="sidebar-toggle-btn"
+          onClick={() => setTabletExpanded(!tabletExpanded)}
+          aria-label={tabletExpanded ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {tabletExpanded ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
+        </button>
+        <SidebarContent {...props} />
+      </aside>
+    </>
   );
 });
 
@@ -87,7 +96,7 @@ export const ResponsiveSidebar = React.memo((props) => {
     };
 
     const handleTouchEnd = (e) => {
-      if (!isMobile) return;
+      if (isDesktop) return;
       const endX = e.touches[0]?.clientX || e.changedTouches[0]?.clientX;
       const endY = e.touches[0]?.clientY || e.changedTouches[0]?.clientY;
       const diffX = endX - startX;
@@ -111,7 +120,7 @@ export const ResponsiveSidebar = React.memo((props) => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [sidebarOpen, isMobile, setSidebarOpen]);
+  }, [sidebarOpen, isDesktop, setSidebarOpen]);
 
   if (isDesktop) {
     return <DesktopSidebar {...props} />;
@@ -121,13 +130,9 @@ export const ResponsiveSidebar = React.memo((props) => {
     return <TabletSidebar {...props} />;
   }
 
-  if (isMobile) {
-    return (
-      <Suspense fallback={null}>
-        <LazyMobileDrawer {...props} />
-      </Suspense>
-    );
-  }
-
-  return null;
+  return (
+    <Suspense fallback={null}>
+      <LazyMobileDrawer {...props} />
+    </Suspense>
+  );
 });

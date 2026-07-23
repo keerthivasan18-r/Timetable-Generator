@@ -140,7 +140,7 @@ export default function ActiveUsersPanel() {
           </div>
         ) : (
           filtered.map(session => (
-            <div key={session.userId || session.id} className="active-user-row">
+            <div key={session.userId || session.id} className="active-user-row" style={{ flexWrap: 'wrap', gap: '12px' }}>
               {/* Live dot */}
               <div className={`active-dot ${session.isActive ? 'online' : 'offline'}`} />
 
@@ -158,8 +158,8 @@ export default function ActiveUsersPanel() {
               </div>
 
               {/* Details */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+              <div style={{ flex: '1 1 180px', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-heading)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {session.name || session.userId}
                   </span>
@@ -171,12 +171,12 @@ export default function ActiveUsersPanel() {
                   {session.userId && session.name && (
                     <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{session.userId}</span>
                   )}
-                  {session.email && <span>{session.email}</span>}
+                  {session.email && <span className="truncate">{session.email}</span>}
                 </div>
               </div>
 
               {/* Time info */}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end', marginBottom: '2px' }}>
                   <Clock size={11} style={{ color: 'var(--text-muted)' }} />
                   <span style={{ fontSize: '0.78rem', fontWeight: 600, color: session.isActive ? 'var(--green-light)' : 'var(--text-muted)' }}>

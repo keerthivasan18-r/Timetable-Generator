@@ -4,6 +4,7 @@ import { generateTimetable, validateTimetable } from '../services/solver';
 import { MAX_WEEKLY_PERIODS, validateSectionPeriods, getSectionsFromYear } from '../services/validation';
 import ActiveUsersPanel from './ActiveUsersPanel';
 import LabScheduler from './LabScheduler';
+import ValidationReportModal from './ValidationReportModal';
 import {
   Users, BookOpen, RefreshCw, CheckCircle, AlertTriangle,
   Trash, Plus, Edit, Mail, Save, Send, HelpCircle, Calendar,
@@ -12,7 +13,11 @@ import {
   Zap, Clock, TrendingUp
 } from 'lucide-react';
 
-export default function HODDashboard({ activePanel, triggerNotificationReload }) {
+export default function HODDashboard({ activePanel, triggerNotificationReload, onNavigateToCourses }) {
+  // Validation Modal state
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+
   // Data states — UNCHANGED
   const [staff, setStaff] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -242,15 +247,23 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
     if (timetable.tables) { setConflicts(validateTimetable(timetable.tables, staff, subjects, updated)); }
   };
 
-  // Timetable — UNCHANGED
+  // Timetable — Pre-generation production-grade validation engine
   const handleGenerate = async () => {
+    // 1. Run 100% pre-generation data validation across all 8 mandatory rules
+    const valRes = await db.validateTimetableData(staff, subjects, assignments, settings);
+    if (!valRes.canGenerate && valRes.errors && valRes.errors.length > 0) {
+      setValidationErrors(valRes.errors);
+      setShowValidationModal(true);
+      return; // STOP! Do NOT execute scheduling algorithm if any validation fails
+    }
+
     const labSlots = await db.getLabSlots();
     const res = generateTimetable(staff, subjects, assignments, settings, labSlots);
     if (res.success) {
       await db.saveTimetable(res.tables, 'draft');
       setTimetable({ status: 'draft', tables: res.tables });
       setConflicts(validateTimetable(res.tables, staff, subjects, settings));
-      showBanner('success', 'Conflict-free timetable generated!');
+      showBanner('success', 'All validation checks passed! Conflict-free timetable generated.');
     } else { showBanner('error', res.error); }
   };
 
@@ -315,18 +328,28 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
   };
 
   // ════════════════════════════════════════════════════════════════════════════
-  // SHARED: Banner component
+  // SHARED: Banner component & Validation Report Modal
   // ════════════════════════════════════════════════════════════════════════════
-  const BannerEl = () => banner ? (
-    <div className={`banner ${banner.type}`}>
-      <span style={{ flex: 1 }}>{banner.message}</span>
-      <button
-        onClick={() => setBanner(null)}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', alignItems: 'center' }}
-        aria-label="Dismiss"
-      ><X size={15} /></button>
-    </div>
-  ) : null;
+  const BannerEl = () => (
+    <>
+      {banner && (
+        <div className={`banner ${banner.type}`}>
+          <span style={{ flex: 1 }}>{banner.message}</span>
+          <button
+            onClick={() => setBanner(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', alignItems: 'center' }}
+            aria-label="Dismiss"
+          ><X size={15} /></button>
+        </div>
+      )}
+      <ValidationReportModal
+        isOpen={showValidationModal}
+        errors={validationErrors}
+        onClose={() => setShowValidationModal(false)}
+        onGoToAssignments={onNavigateToCourses}
+      />
+    </>
+  );
 
   // ════════════════════════════════════════════════════════════════════════════
   // RENDER: DASHBOARD HOME
@@ -361,7 +384,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
             <button className="btn btn-secondary" onClick={() => loadData(true)} disabled={loading}>
               <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
             </button>
-            <button className="btn btn-primary" onClick={handleGenerate} disabled={isOverCapacity}>
+            <button className="btn btn-primary" onClick={handleGenerate}>
               <Zap size={14} /> Generate Schedule
             </button>
           </div>
@@ -550,7 +573,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
               <h3>No Timetable Generated</h3>
               <p>Assign staff to all subjects, then click "Generate Schedule" to create an automatic, conflict-free timetable.</p>
             </div>
-            <button className="btn btn-primary" onClick={handleGenerate} disabled={isOverCapacity} style={{ marginTop: '20px' }}>
+            <button className="btn btn-primary" onClick={handleGenerate} style={{ marginTop: '20px' }}>
               <Zap size={15} /> Run Auto-Scheduler
             </button>
           </div>
@@ -692,7 +715,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
               <span className="badge badge-purple">{staff.length}</span>
             </h3>
           </div>
-          <div className="table-container">
+          <div className="table-container responsive-table-card">
             {staff.length === 0 ? (
               <div className="empty-state">
                 <Users size={48} className="empty-state-icon" />
@@ -713,8 +736,8 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
                 <tbody>
                   {staff.map(m => (
                     <tr key={m.id}>
-                      <td><span className="badge badge-purple">{m.id}</span></td>
-                      <td>
+                      <td data-label="Staff ID"><span className="badge badge-purple">{m.id}</span></td>
+                      <td data-label="Name">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{
                             width: 28, height: 28, borderRadius: 'var(--r-full)',
@@ -727,8 +750,8 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
                           <strong style={{ fontSize: '0.875rem' }}>{m.name}</strong>
                         </div>
                       </td>
-                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.845rem' }}>{m.email}</td>
-                      <td>
+                      <td data-label="Email" style={{ color: 'var(--text-secondary)', fontSize: '0.845rem' }}>{m.email}</td>
+                      <td data-label="Password">
                         <code style={{
                           fontSize: '0.78rem', background: 'var(--bg-elevated)',
                           padding: '3px 8px', borderRadius: 'var(--r-sm)',
@@ -736,7 +759,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload })
                           fontFamily: 'JetBrains Mono, monospace'
                         }}>{m.password}</code>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td data-label="Actions" style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                           <button
                             className="btn btn-secondary btn-icon btn-sm"

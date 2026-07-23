@@ -98,24 +98,62 @@ export default function LabScheduler() {
         return `Faculty Conflict: ${staffMember?.name || editStaff} is already scheduled in section ${conflictSec} at Day ${editSlot.dayOrder}, Period ${editSlot.period}. Please reassign or choose a different slot.`;
       }
     }
-    const sameSubjectConflict = labSlots.find(s =>
-      (s.subject_id === editSubject || s.subjectId === editSubject) &&
+    // 2. Check if another subject already occupies this exact slot in the section
+    const slotOverlap = labSlots.find(s =>
+      s.section === editSlot.section &&
       (s.day_order ?? s.dayOrder) == editSlot.dayOrder &&
       s.period == editSlot.period &&
-      s.section === editSlot.section
+      (s.subject_id || s.subjectId) !== editSubject
     );
-    if (sameSubjectConflict && (sameSubjectConflict.day_order ?? sameSubjectConflict.dayOrder) == editSlot.dayOrder && sameSubjectConflict.period == editSlot.period) {
-      return null;
+    if (slotOverlap) {
+      const otherSub = subjects.find(sub => sub.id === (slotOverlap.subject_id || slotOverlap.subjectId));
+      return `Slot Conflict: Period ${editSlot.period} is already reserved for '${otherSub?.name || slotOverlap.subjectId}' in ${editSlot.section}.`;
     }
-    const subjectInSection = labSlots.find(s =>
+
+    // 3. Check continuity for the subject on the same day in this section
+    const sameSubjDaySlots = labSlots.filter(s =>
       (s.subject_id === editSubject || s.subjectId === editSubject) &&
       s.section === editSlot.section &&
-      !((s.day_order ?? s.dayOrder) == editSlot.dayOrder && s.period == editSlot.period)
+      (s.day_order ?? s.dayOrder) == editSlot.dayOrder &&
+      s.period != editSlot.period
     );
-    if (subjectInSection) {
-      const sub = subjects.find(s => s.id === editSubject);
-      return `Subject already has a lab slot in ${editSlot.section} at Day ${subjectInSection.day_order ?? subjectInSection.dayOrder}, Period ${subjectInSection.period}. You can only have one lab slot per subject per section.`;
+
+    if (sameSubjDaySlots.length > 0) {
+      const existingPeriods = sameSubjDaySlots.map(s => Number(s.period));
+      const allPeriods = Array.from(new Set([...existingPeriods, Number(editSlot.period)])).sort((a, b) => a - b);
+      let isContinuous = true;
+      for (let i = 0; i < allPeriods.length - 1; i++) {
+        if (allPeriods[i + 1] - allPeriods[i] !== 1) {
+          isContinuous = false;
+          break;
+        }
+      }
+      if (!isContinuous) {
+        const sub = subjects.find(s => s.id === editSubject);
+        return `Continuity Conflict: Reserved lab slots for '${sub?.name || editSubject}' on Day ${editSlot.dayOrder} must be continuous (consecutive periods).`;
+      }
     }
+
+    // 4. Check if the same laboratory room is booked by another section during the exact same day & period
+    const subObj = subjects.find(s => s.id === editSubject);
+    const isPractical = subObj?.type === 'practical' || editSubject.includes('LAB') || subObj?.name?.toLowerCase().includes('lab');
+    if (isPractical) {
+      const labRoomConflict = labSlots.find(s =>
+        (s.subject_id === editSubject || s.subjectId === editSubject) &&
+        (s.day_order ?? s.dayOrder) == editSlot.dayOrder &&
+        s.period == editSlot.period &&
+        s.section !== editSlot.section
+      );
+      if (labRoomConflict) {
+        return `Laboratory Conflict: The lab room for '${subObj?.name || editSubject}' is already occupied by Section ${labRoomConflict.section} at Day ${editSlot.dayOrder}, Period ${editSlot.period}.`;
+      }
+    }
+
+    // 5. Check if period exceeds available periods per day
+    if (editSlot.period > (settings.periodsPerDay || 5)) {
+      return `Period Exceeded: Period ${editSlot.period} exceeds the available ${settings.periodsPerDay || 5} periods in a day.`;
+    }
+
     return null;
   };
 

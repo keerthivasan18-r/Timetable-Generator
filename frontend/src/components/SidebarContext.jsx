@@ -8,23 +8,47 @@ export function SidebarProvider({ children }) {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
   useEffect(() => {
+    let timeoutId = null;
     const handleResize = () => {
-      setWidth(window.innerWidth);
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setWidth(window.innerWidth);
+      }, 50);
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const isMobile = width < 768;
+  const isSmallMobile = width < 480;
+  const isLargeMobile = width >= 576 && width < 768;
   const isTablet = width >= 768 && width < 1024;
+  const isLaptop = width >= 1024 && width < 1440;
   const isDesktop = width >= 1024;
+  const isLargeDesktop = width >= 1536;
+  const isUltrawide = width >= 1920;
 
-  // Auto-close mobile drawer when window resizes to larger screen
+  // Lock body scroll when drawer is open on mobile or tablet
   useEffect(() => {
-    if (!isMobile) {
+    if (!isDesktop && sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isDesktop, sidebarOpen]);
+
+  // Auto-close overlay drawer when window resizes to desktop screen
+  useEffect(() => {
+    if (isDesktop) {
       setSidebarOpen(false);
     }
-  }, [isMobile]);
+  }, [isDesktop]);
 
   const openSidebar = () => setSidebarOpen(true);
   const closeSidebar = () => setSidebarOpen(false);
@@ -41,8 +65,14 @@ export function SidebarProvider({ children }) {
         tabletExpanded,
         setTabletExpanded,
         isMobile,
+        isSmallMobile,
+        isLargeMobile,
         isTablet,
+        isLaptop,
         isDesktop,
+        isLargeDesktop,
+        isUltrawide,
+        windowWidth: width,
       }}
     >
       {children}
@@ -57,3 +87,4 @@ export function useSidebar() {
   }
   return context;
 }
+

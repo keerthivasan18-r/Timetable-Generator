@@ -1,98 +1,44 @@
-export const MAX_WEEKLY_PERIODS = 30;
-
 /**
- * Maps an academic year to its respective sections.
- * @param {string} year
- * @returns {string[]}
+ * ChronoAI - Production-Grade Timetable Pre-Generation Validation Service
+ * Validates 100% of data integrity before the timetable generation solver executes.
  */
-export function getSectionsFromYear(year) {
-  if (year === 'First Year') return ['1-A', '1-B'];
-  if (year === 'Second Year') return ['2-A', '2-B'];
-  if (year === 'Third Year') return ['3-A', '3-B'];
-  return [];
-}
 
-/**
- * Maps a section name to its academic year.
- * @param {string} section
- * @returns {string}
- */
-export function getYearFromSection(section) {
-  if (section.startsWith('1')) return 'First Year';
-  if (section.startsWith('2')) return 'Second Year';
-  if (section.startsWith('3')) return 'Third Year';
-  return '';
-}
-
-/**
- * Shared validation logic for weekly periods capacity of sections in a year.
- * @param {object} params
- * @param {string} params.year - Target academic year ('First Year', 'Second Year', 'Third Year')
- * @param {string} [params.subjectId] - Optional subject ID when editing
- * @param {number} params.newPeriods - Periods being set/added
- * @param {Array} params.subjects - Existing list of subjects
- * @returns {object} Validation result
- */
-export function validateSectionPeriods({ year, subjectId, newPeriods, subjects }) {
-  // Filter subjects belonging to the same academic year
-  const yearSubjects = subjects.filter(s => s.year === year);
-  
-  // Calculate current sum of periods
-  const currentTotal = yearSubjects.reduce((sum, s) => sum + (s.periods || 0), 0);
-  
-  // Find periods of the subject being updated (if editing)
-  let oldPeriods = 0;
-  if (subjectId) {
-    const existing = yearSubjects.find(s => s.id === subjectId);
-    if (existing) {
-      oldPeriods = existing.periods || 0;
-    }
-  }
-
-  const newTotal = currentTotal - oldPeriods + newPeriods;
-  
-  if (newTotal > MAX_WEEKLY_PERIODS) {
-    const sections = getSectionsFromYear(year);
-    const representativeSection = sections[0] || '1-A';
-    
-    return {
-      valid: false,
-      section: representativeSection,
-      maximum: MAX_WEEKLY_PERIODS,
-      current: currentTotal - oldPeriods,
-      attempted: newPeriods,
-      total: newTotal,
-      error: 'Weekly period allocation exceeded.'
-    };
-  }
-  
-  return {
-    valid: true,
-    total: newTotal
-  };
-}
-
-export const VALID_SECTIONS = ['1-A', '1-B', '2-A', '2-B', '3-A', '3-B'];
+export const MAX_WEEKLY_PERIODS_PER_SECTION = 30; // 6 days * 5 periods = 30
 export const MAX_FACULTY_WORKLOAD = 30;
 
+export const VALID_SECTIONS = ['1-A', '1-B', '2-A', '2-B', '3-A', '3-B'];
+
 /**
- * Production-Grade Validation Engine (Client-Side implementation for fast-path and offline fallback)
- * Evaluates all 8 mandatory validation rules.
+ * Executes all 8 mandatory validation rules.
+ * 
+ * @param {Object} params
+ * @param {Array} params.staff - Staff roster
+ * @param {Array} params.subjects - Course catalog
+ * @param {Array} params.assignments - Section-subject-staff mappings
+ * @param {Object} params.settings - System settings (working days, periods per day)
+ * @returns {Object} { success, canGenerate, errors }
  */
-export function validateSchedulerData(staff = [], subjects = [], assignments = [], settings = {}) {
+export function validateSchedulerData({ staff = [], subjects = [], assignments = [], settings = {} }) {
   const errors = [];
 
   const activeStaffIds = new Set(staff.map(s => s.id));
   const activeSubjectIds = new Set(subjects.map(s => s.id));
   const validSectionSet = new Set(VALID_SECTIONS);
 
+  // Helper map: subjectId -> Subject object
   const subjectMap = new Map();
   subjects.forEach(s => subjectMap.set(s.id, s));
 
+  // Helper map: staffId -> Staff object
   const staffMap = new Map();
   staff.forEach(s => staffMap.set(s.id, s));
 
-  // Rule 8: Section Exists
+  // Determine sections from assignments and valid standard sections
+  const definedSections = new Set([...VALID_SECTIONS]);
+
+  // ---------------------------------------------------------------------------
+  // Validation 8 - Section Exists & Assignment Section Integrity
+  // ---------------------------------------------------------------------------
   assignments.forEach((asgn, index) => {
     if (!asgn.section || !validSectionSet.has(asgn.section)) {
       errors.push({
@@ -106,7 +52,9 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
     }
   });
 
-  // Rule 6: Subject Exists
+  // ---------------------------------------------------------------------------
+  // Validation 6 - Subject Exists (No orphan assignments)
+  // ---------------------------------------------------------------------------
   assignments.forEach(asgn => {
     if (asgn.subjectId && !activeSubjectIds.has(asgn.subjectId)) {
       errors.push({
@@ -120,7 +68,9 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
     }
   });
 
-  // Rule 7: Faculty Exists
+  // ---------------------------------------------------------------------------
+  // Validation 7 - Faculty Exists (No assignments referencing deleted faculty)
+  // ---------------------------------------------------------------------------
   assignments.forEach(asgn => {
     if (asgn.staffId && !activeStaffIds.has(asgn.staffId)) {
       const subj = subjectMap.get(asgn.subjectId);
@@ -130,12 +80,14 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
         faculty: asgn.staffId,
         weeklyHours: subj?.periods || 0,
         type: 'Deleted/Inactive Faculty',
-        error: `Assigned faculty ID "${asgn.staffId}" does not exist in active roster.`
+        error: `Assigned faculty ID "${asgn.staffId}" does not exist in the active roster.`
       });
     }
   });
 
-  // Rule 4: Duplicate Subject Assignment
+  // ---------------------------------------------------------------------------
+  // Validation 4 - Duplicate Subject Assignment (Subject assigned >1 time per section)
+  // ---------------------------------------------------------------------------
   const sectionSubjectCount = new Map();
   assignments.forEach(asgn => {
     if (asgn.section && asgn.subjectId) {
@@ -159,12 +111,17 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
     }
   });
 
-  // Rule 1: Faculty Assignment & Rule 2: Subject Hours
+  // ---------------------------------------------------------------------------
+  // Validation 1 - Faculty Assignment & Validation 2 - Subject Hours
+  // Check every subject offered for each section
+  // ---------------------------------------------------------------------------
   VALID_SECTIONS.forEach(sec => {
+    // Determine target year for this section
     const year = sec.startsWith('1') ? 'First Year' : sec.startsWith('2') ? 'Second Year' : 'Third Year';
     const sectionSubjects = subjects.filter(s => (s.year || 'First Year') === year);
 
     sectionSubjects.forEach(subj => {
+      // Check Validation 2: Subject Hours
       if (subj.periods === null || subj.periods === undefined || isNaN(subj.periods) || subj.periods <= 0) {
         errors.push({
           section: sec,
@@ -172,10 +129,11 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
           faculty: '-',
           weeklyHours: subj.periods || 0,
           type: 'Weekly Hours Missing',
-          error: `Weekly Hours Missing for subject "${subj.name}".`
+          error: `Subject "${subj.name}" has invalid or missing weekly hours (${subj.periods}).`
         });
       }
 
+      // Check Validation 1: Faculty Assignment
       const asgn = assignments.find(a => a.section === sec && a.subjectId === subj.id);
       if (!asgn || !asgn.staffId || !asgn.staffId.trim()) {
         errors.push({
@@ -190,14 +148,16 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
     });
   });
 
-  // Rule 3: Total Weekly Hours (Must equal EXACTLY 30 for every section)
+  // ---------------------------------------------------------------------------
+  // Validation 3 - Total Weekly Hours (Must equal EXACTLY 30 for every section)
+  // ---------------------------------------------------------------------------
   VALID_SECTIONS.forEach(sec => {
     const year = sec.startsWith('1') ? 'First Year' : sec.startsWith('2') ? 'Second Year' : 'Third Year';
     const sectionSubjects = subjects.filter(s => (s.year || 'First Year') === year);
     const totalAssignedHours = sectionSubjects.reduce((sum, s) => sum + (Number(s.periods) || 0), 0);
 
-    if (totalAssignedHours > MAX_WEEKLY_PERIODS) {
-      const excess = totalAssignedHours - MAX_WEEKLY_PERIODS;
+    if (totalAssignedHours > MAX_WEEKLY_PERIODS_PER_SECTION) {
+      const excess = totalAssignedHours - MAX_WEEKLY_PERIODS_PER_SECTION;
       errors.push({
         section: sec,
         subject: 'All Section Subjects',
@@ -205,11 +165,11 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
         weeklyHours: totalAssignedHours,
         type: 'Hours Exceeded',
         assigned: totalAssignedHours,
-        allowed: MAX_WEEKLY_PERIODS,
-        error: `Assigned Hours ${totalAssignedHours} / ${MAX_WEEKLY_PERIODS}. Reduce ${excess} Hours.`
+        allowed: MAX_WEEKLY_PERIODS_PER_SECTION,
+        error: `Assigned Hours ${totalAssignedHours} / ${MAX_WEEKLY_PERIODS_PER_SECTION}. Reduce ${excess} Hours.`
       });
-    } else if (totalAssignedHours < MAX_WEEKLY_PERIODS) {
-      const deficit = MAX_WEEKLY_PERIODS - totalAssignedHours;
+    } else if (totalAssignedHours < MAX_WEEKLY_PERIODS_PER_SECTION) {
+      const deficit = MAX_WEEKLY_PERIODS_PER_SECTION - totalAssignedHours;
       errors.push({
         section: sec,
         subject: 'All Section Subjects',
@@ -217,13 +177,15 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
         weeklyHours: totalAssignedHours,
         type: 'Hours Insufficient',
         assigned: totalAssignedHours,
-        required: MAX_WEEKLY_PERIODS,
-        error: `Assigned Hours ${totalAssignedHours} / ${MAX_WEEKLY_PERIODS}. Assign ${deficit} More Hours.`
+        required: MAX_WEEKLY_PERIODS_PER_SECTION,
+        error: `Assigned Hours ${totalAssignedHours} / ${MAX_WEEKLY_PERIODS_PER_SECTION}. Assign ${deficit} More Hours.`
       });
     }
   });
 
-  // Rule 5: Faculty Workload (Max 30 periods per faculty)
+  // ---------------------------------------------------------------------------
+  // Validation 5 - Faculty Workload (Max 30 periods across all sections)
+  // ---------------------------------------------------------------------------
   const facultyWorkloadMap = new Map();
   assignments.forEach(asgn => {
     if (asgn.staffId && activeStaffIds.has(asgn.staffId)) {
@@ -259,4 +221,3 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
       : `Validation failed with ${errors.length} error(s).`
   };
 }
-

@@ -4,12 +4,12 @@ import { SidebarContent } from './SidebarContent';
 import { CloseButton } from './ResponsiveSidebar';
 
 export default function MobileDrawer(props) {
-  const { sidebarOpen, closeSidebar, isMobile } = useSidebar();
+  const { sidebarOpen, closeSidebar, isDesktop } = useSidebar();
   const drawerRef = useRef(null);
 
-  // Focus trap
+  // Focus trap & Escape key
   useEffect(() => {
-    if (!sidebarOpen || !isMobile) return;
+    if (!sidebarOpen || isDesktop) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -42,33 +42,22 @@ export default function MobileDrawer(props) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sidebarOpen, isMobile, closeSidebar]);
-
-  // Lock body scroll when drawer is open
-  useEffect(() => {
-    if (sidebarOpen && isMobile) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [sidebarOpen, isMobile]);
+  }, [sidebarOpen, isDesktop, closeSidebar]);
 
   // Auto focus first element on open
   useEffect(() => {
-    if (sidebarOpen && isMobile) {
-      setTimeout(() => {
+    if (sidebarOpen && !isDesktop) {
+      const timer = setTimeout(() => {
         const focusableElements = drawerRef.current?.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
         if (focusableElements && focusableElements.length > 0) {
           focusableElements[0].focus();
         }
-      }, 100);
+      }, 50);
+      return () => clearTimeout(timer);
     }
-  }, [sidebarOpen, isMobile]);
+  }, [sidebarOpen, isDesktop]);
 
   return (
     <>
@@ -83,7 +72,7 @@ export default function MobileDrawer(props) {
         ref={drawerRef}
         className={`mobile-drawer ${sidebarOpen ? 'open' : ''}`}
         role="dialog"
-        aria-modal="true"
+        aria-modal={sidebarOpen}
         aria-label="Mobile Navigation Drawer"
       >
         <div className="mobile-drawer-header">

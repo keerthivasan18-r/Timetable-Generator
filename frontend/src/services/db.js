@@ -4,7 +4,7 @@
  */
 
 const API_BASE = 'http://localhost:3001/api';
-import { validateSectionPeriods } from './validation.js';
+import { validateSectionPeriods, validateSchedulerData } from './validation.js';
 
 // ─── localStorage helpers (fallback + session storage) ────────────────────────
 const LS = {
@@ -513,5 +513,14 @@ export const db = {
 
   async clearSimLogs() {
     return this.clearEmailLogs();
+  },
+
+  // ── Pre-generation Validation ───────────────────────────────────────────────
+  async validateTimetableData(staff, subjects, assignments, settings) {
+    const res = await apiCall('POST', '/timetable/validate', { staff, subjects, assignments, settings });
+    if (res.ok && res.data) return res.data;
+    // Fallback to client-side validation logic
+    return validateSchedulerData(staff, subjects, assignments, settings);
   }
 };
+

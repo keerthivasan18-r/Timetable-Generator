@@ -102,24 +102,24 @@ export default function StaffDashboard({ user }) {
     <div className="fade-in">
       {/* ── Welcome Header ─────────────────────────────────────────────── */}
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
           <div style={{
-            width: 56, height: 56, borderRadius: '50%',
+            width: 'clamp(44px, 10vw, 56px)', height: 'clamp(44px, 10vw, 56px)', borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--blue), var(--purple))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 800, fontSize: '1.15rem', color: 'white', flexShrink: 0,
+            fontWeight: 800, fontSize: 'clamp(0.95rem, 3vw, 1.15rem)', color: 'white', flexShrink: 0,
             boxShadow: 'var(--shadow-glow-blue)',
             border: '2px solid rgba(255,255,255,0.1)'
           }}>
             {getInitials(user.name)}
           </div>
-          <div>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.04em', marginBottom: '2px' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.75rem)', fontWeight: 900, letterSpacing: '-0.04em', marginBottom: '2px' }}>
               Welcome back, {user.name.split(' ')[0]}
             </h1>
-            <p style={{ fontSize: '0.845rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <p style={{ fontSize: 'clamp(0.75rem, 2vw, 0.845rem)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span className="badge badge-purple" style={{ fontSize: '0.65rem' }}>Faculty</span>
-              {user.id} · {user.email}
+              <span className="truncate">{user.id} · {user.email}</span>
             </p>
           </div>
         </div>

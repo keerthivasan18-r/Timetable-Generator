@@ -13,21 +13,22 @@ export function SidebarContent({
   handleLogout,
   getInitials
 }) {
-  const { setSidebarOpen, isMobile } = useSidebar();
+  const { setSidebarOpen, isDesktop } = useSidebar();
 
   const handleNavClick = (itemId) => {
     navigate(itemId);
-    if (isMobile) {
+    if (!isDesktop) {
       setSidebarOpen(false);
     }
   };
 
   return (
     <div className="sidebar-inner">
-      {/* Logo */}
+
+      {/* ── Logo ──────────────────────────────────────────────────────────── */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <Calendar size={20} />
+        <div className="sidebar-logo-icon" aria-hidden="true">
+          <Calendar size={18} />
         </div>
         <div className="sidebar-logo-text">
           <span className="sidebar-logo-name">ChronoAI</span>
@@ -35,8 +36,9 @@ export function SidebarContent({
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="sidebar-nav">
+      {/* ── Navigation ────────────────────────────────────────────────────── */}
+      <nav className="sidebar-nav" role="navigation" aria-label="Main navigation">
+
         {user.role === 'hod' && (
           <div className="sidebar-section-label">Core</div>
         )}
@@ -46,58 +48,60 @@ export function SidebarContent({
             key={item.id}
             id={`nav-${item.id}`}
             className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-            data-color={NAV_COLORS[item.id] || 'blue'}
             onClick={() => handleNavClick(item.id)}
             aria-current={activeTab === item.id ? 'page' : undefined}
           >
-            <span className="nav-item-icon">{item.icon}</span>
+            <span className="nav-item-icon" aria-hidden="true">{item.icon}</span>
             <span className="nav-item-label">{item.label}</span>
-            {item.badge && <span className="nav-badge">{item.badge}</span>}
+            {item.badge != null && item.badge > 0 && (
+              <span className="nav-badge" aria-label={`${item.badge} unread`}>{item.badge}</span>
+            )}
           </button>
         ))}
 
         {user.role === 'hod' && (
           <>
-            <div className="sidebar-section-label">System</div>
+            <div className="sidebar-section-label" style={{ marginTop: '8px' }}>System</div>
             {navItems.slice(4).map(item => (
               <button
                 key={item.id}
                 id={`nav-${item.id}`}
                 className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                data-color={NAV_COLORS[item.id] || 'blue'}
                 onClick={() => handleNavClick(item.id)}
                 aria-current={activeTab === item.id ? 'page' : undefined}
               >
-                <span className="nav-item-icon">{item.icon}</span>
+                <span className="nav-item-icon" aria-hidden="true">{item.icon}</span>
                 <span className="nav-item-label">{item.label}</span>
-                {item.badge && <span className="nav-badge">{item.badge}</span>}
+                {item.badge != null && item.badge > 0 && (
+                  <span className="nav-badge" aria-label={`${item.badge} unread`}>{item.badge}</span>
+                )}
               </button>
             ))}
           </>
         )}
       </nav>
 
-      {/* Footer */}
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
       <div className="sidebar-footer">
+
         {/* Theme toggle */}
         <button
           id="theme-toggle"
           onClick={toggleTheme}
           className="nav-item"
-          style={{ color: 'var(--text-muted)' }}
-          aria-label="Toggle color theme"
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          <span className="nav-item-icon">
+          <span className="nav-item-icon" aria-hidden="true">
             {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </span>
           <span className="nav-item-label">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
         </button>
 
-        <div className="sidebar-divider" />
+        <div className="sidebar-divider" role="separator" />
 
-        {/* User chip */}
+        {/* User profile */}
         <div className="user-profile-card">
-          <div className="user-avatar">
+          <div className="user-avatar" aria-label={`User: ${user.name}`} title={user.name}>
             {getInitials(user.name || 'User')}
           </div>
           <div className="user-info">
@@ -115,10 +119,11 @@ export function SidebarContent({
           onClick={handleLogout}
           aria-label="Sign out"
         >
-          <span className="nav-item-icon"><LogOut size={17} /></span>
+          <span className="nav-item-icon" aria-hidden="true"><LogOut size={17} /></span>
           <span className="nav-item-label">Sign Out</span>
         </button>
       </div>
+
     </div>
   );
 }
