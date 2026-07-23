@@ -5,13 +5,40 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dbPath = process.env.DB_FILE
-  ? path.resolve(process.cwd(), process.env.DB_FILE)
-  : path.resolve(process.cwd(), '../database/timetable.sqlite');
+const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+let dbPath;
+if (isVercel) {
+  dbPath = '/tmp/timetable.sqlite';
+} else if (process.env.DB_FILE) {
+  dbPath = path.isAbsolute(process.env.DB_FILE)
+    ? process.env.DB_FILE
+    : path.resolve(process.cwd(), process.env.DB_FILE);
+} else {
+  dbPath = path.resolve(process.cwd(), '../database/timetable.sqlite');
+}
 
 const dbDir = path.dirname(dbPath);
 if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+  try { fs.mkdirSync(dbDir, { recursive: true }); } catch {}
+}
+
+// Copy seed database to /tmp if running on Vercel and /tmp file is not created yet
+if (isVercel && !fs.existsSync(dbPath)) {
+  try {
+    const seedCandidates = [
+      path.resolve(process.cwd(), 'database/timetable.sqlite'),
+      path.resolve(process.cwd(), '../database/timetable.sqlite'),
+      path.resolve(process.cwd(), 'timetable.sqlite')
+    ];
+    const seedDbPath = seedCandidates.find(p => fs.existsSync(p));
+    if (seedDbPath) {
+      fs.copyFileSync(seedDbPath, dbPath);
+      console.log(`📋 Copied seed database from ${seedDbPath} to ${dbPath}`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not copy seed DB to /tmp:', err.message);
+  }
 }
 
 const db = new DatabaseSync(dbPath);
