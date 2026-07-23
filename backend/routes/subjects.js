@@ -21,7 +21,9 @@ router.post('/', async (req, res) => {
     await pool.query('INSERT INTO subjects (id, name, type, periods, year) VALUES (?, ?, ?, ?, ?)', [id, name, type || 'theory', parseInt(periods), year || 'First Year']);
     res.json({ success: true });
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Subject Code already exists.' });
+    if (err.code === 'ER_DUP_ENTRY' || err.message?.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Subject Code already exists.' });
+    }
     res.status(500).json({ error: err.message });
   }
 });
@@ -69,8 +71,8 @@ router.post('/assignments', async (req, res) => {
       await pool.query('DELETE FROM course_assignments WHERE section=? AND subject_id=?', [section, subjectId]);
     } else {
       await pool.query(
-        'INSERT INTO course_assignments (section, subject_id, staff_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE staff_id=?',
-        [section, subjectId, staffId, staffId]
+        'INSERT INTO course_assignments (section, subject_id, staff_id) VALUES (?, ?, ?) ON CONFLICT(section, subject_id) DO UPDATE SET staff_id=excluded.staff_id',
+        [section, subjectId, staffId]
       );
     }
     res.json({ success: true });
@@ -85,8 +87,9 @@ router.post('/assignments/batch', async (req, res) => {
   try {
     await pool.query('DELETE FROM course_assignments');
     if (assignments && assignments.length > 0) {
-      const values = assignments.map(a => [a.section, a.subjectId, a.staffId]);
-      await pool.query('INSERT INTO course_assignments (section, subject_id, staff_id) VALUES ?', [values]);
+      for (const a of assignments) {
+        await pool.query('INSERT INTO course_assignments (section, subject_id, staff_id) VALUES (?, ?, ?)', [a.section, a.subjectId, a.staffId]);
+      }
     }
     res.json({ success: true });
   } catch (err) {

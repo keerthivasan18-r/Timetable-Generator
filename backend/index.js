@@ -14,47 +14,40 @@ import labSlotsRoutes from './routes/lab_slots.js';
 
 dotenv.config();
 
-// Run database migrations on server startup to automatically extend tables for Second Year support
+// Run database migrations on server startup to automatically extend tables
 async function runMigrations() {
   try {
     // 1. Alter subjects table to add year column
-    const [colsSubjects] = await pool.query("SHOW COLUMNS FROM subjects LIKE 'year'");
-    if (colsSubjects.length === 0) {
-      await pool.query("ALTER TABLE subjects ADD COLUMN year VARCHAR(20) DEFAULT 'First Year'");
+    const [colsSubjects] = await pool.query("PRAGMA table_info(subjects)");
+    if (!colsSubjects.some(c => c.name === 'year')) {
+      await pool.query("ALTER TABLE subjects ADD COLUMN year TEXT DEFAULT 'First Year'");
       console.log("Migration: Added 'year' column to subjects table.");
     }
 
     // 2. Alter email_logs table to add broadcast-related columns
-    const [colsBroadcast] = await pool.query("SHOW COLUMNS FROM email_logs LIKE 'is_broadcast'");
-    if (colsBroadcast.length === 0) {
-      await pool.query("ALTER TABLE email_logs ADD COLUMN is_broadcast TINYINT(1) DEFAULT 0");
-      console.log("Migration: Added 'is_broadcast' column to email_logs table.");
+    const [colsEmailLogs] = await pool.query("PRAGMA table_info(email_logs)");
+    if (!colsEmailLogs.some(c => c.name === 'is_broadcast')) {
+      await pool.query("ALTER TABLE email_logs ADD COLUMN is_broadcast INTEGER DEFAULT 0");
     }
-    const [colsCount] = await pool.query("SHOW COLUMNS FROM email_logs LIKE 'recipient_count'");
-    if (colsCount.length === 0) {
-      await pool.query("ALTER TABLE email_logs ADD COLUMN recipient_count INT DEFAULT 1");
-      console.log("Migration: Added 'recipient_count' column to email_logs table.");
+    if (!colsEmailLogs.some(c => c.name === 'recipient_count')) {
+      await pool.query("ALTER TABLE email_logs ADD COLUMN recipient_count INTEGER DEFAULT 1");
     }
-    const [colsStatus] = await pool.query("SHOW COLUMNS FROM email_logs LIKE 'status'");
-    if (colsStatus.length === 0) {
-      await pool.query("ALTER TABLE email_logs ADD COLUMN status VARCHAR(20) DEFAULT 'success'");
-      console.log("Migration: Added 'status' column to email_logs table.");
+    if (!colsEmailLogs.some(c => c.name === 'status')) {
+      await pool.query("ALTER TABLE email_logs ADD COLUMN status TEXT DEFAULT 'success'");
     }
-    const [colsSender] = await pool.query("SHOW COLUMNS FROM email_logs LIKE 'sender'");
-    if (colsSender.length === 0) {
-      await pool.query("ALTER TABLE email_logs ADD COLUMN sender VARCHAR(100) DEFAULT 'HOD Admin'");
-      console.log("Migration: Added 'sender' column to email_logs table.");
+    if (!colsEmailLogs.some(c => c.name === 'sender')) {
+      await pool.query("ALTER TABLE email_logs ADD COLUMN sender TEXT DEFAULT 'HOD Admin'");
     }
 
     // 3. Create and seed sections table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS sections (
-        name VARCHAR(10) PRIMARY KEY,
-        year VARCHAR(20) NOT NULL
+        name TEXT PRIMARY KEY,
+        year TEXT NOT NULL
       )
     `);
     await pool.query(`
-      INSERT IGNORE INTO sections (name, year) VALUES 
+      INSERT OR IGNORE INTO sections (name, year) VALUES 
       ('1-A', 'First Year'),
       ('1-B', 'First Year'),
       ('2-A', 'Second Year'),
@@ -62,9 +55,8 @@ async function runMigrations() {
       ('3-A', 'Third Year'),
       ('3-B', 'Third Year')
     `);
-    console.log("Migration: Seeded sections table.");
 
-    // 4. Seed new common subjects and their default assignments
+    // 4. Seed new common subjects and default assignments
     const newSubjects = [
       ['CS108', 'Statistics', 'theory', 4, 'First Year'],
       ['CS205', 'Tamil', 'language', 6, 'Second Year'],
@@ -79,11 +71,10 @@ async function runMigrations() {
 
     for (const [id, name, type, periods, year] of newSubjects) {
       await pool.query(
-        'INSERT IGNORE INTO subjects (id, name, type, periods, year) VALUES (?, ?, ?, ?, ?)',
+        'INSERT OR IGNORE INTO subjects (id, name, type, periods, year) VALUES (?, ?, ?, ?, ?)',
         [id, name, type, periods, year]
       );
     }
-    console.log("Migration: Seeded extended subjects list.");
 
     const newAssignments = [
       ['1-A', 'CS108', 'STF006'],
@@ -108,11 +99,10 @@ async function runMigrations() {
 
     for (const [section, subjectId, staffId] of newAssignments) {
       await pool.query(
-        'INSERT IGNORE INTO course_assignments (section, subject_id, staff_id) VALUES (?, ?, ?)',
+        'INSERT OR IGNORE INTO course_assignments (section, subject_id, staff_id) VALUES (?, ?, ?)',
         [section, subjectId, staffId]
       );
     }
-    console.log("Migration: Seeded course_assignments for extended subjects.");
   } catch (err) {
     console.error("Migration error:", err.message);
   }
@@ -150,9 +140,12 @@ app.use('/api/email-logs', emailLogsRoutes);
 app.use('/api/lab-slots', labSlotsRoutes);
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`\n✅ ChronoAI API Server running at http://localhost:${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`\n📋 Make sure your MySQL database is ready:`);
-  console.log(`   mysql -u ${process.env.DB_USER || 'root'} -p ${process.env.DB_NAME || 'chronoai_timetable'} < database/schema.sql\n`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`\n✅ ChronoAI API Server running at http://localhost:${PORT}`);
+    console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`💾 SQLite Database file: ${process.env.DB_FILE || '../database/timetable.sqlite'}\n`);
+  });
+}
+
+export default app;

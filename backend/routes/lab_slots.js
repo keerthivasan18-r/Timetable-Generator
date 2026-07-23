@@ -37,7 +37,6 @@ router.post('/', async (req, res) => {
       }
 
       // 2. Laboratory Availability Validation (based on subject_id representing a unique laboratory session)
-      // Only check laboratory room overlap conflict for practical / lab subjects
       const [subjectRows] = await pool.query('SELECT type FROM subjects WHERE id = ?', [subjectId]);
       const isPractical = subjectRows.length > 0 && subjectRows[0].type === 'practical';
 
@@ -53,8 +52,8 @@ router.post('/', async (req, res) => {
     }
 
     await pool.query(
-      'INSERT INTO lab_slots (section, day_order, period, subject_id, staff_id) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE subject_id=?, staff_id=?',
-      [section, dayOrder, period, subjectId || null, staffId || null, subjectId || null, staffId || null]
+      'INSERT INTO lab_slots (section, day_order, period, subject_id, staff_id) VALUES (?, ?, ?, ?, ?) ON CONFLICT(section, day_order, period) DO UPDATE SET subject_id=excluded.subject_id, staff_id=excluded.staff_id',
+      [section, dayOrder, period, subjectId || null, staffId || null]
     );
     res.json({ success: true });
   } catch (err) {

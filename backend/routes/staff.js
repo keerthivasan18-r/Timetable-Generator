@@ -30,7 +30,9 @@ router.post('/', async (req, res) => {
     await pool.query('INSERT INTO staff (id, name, email, password) VALUES (?, ?, ?, ?)', [newId, name, email, password]);
     res.json({ success: true, id: newId, name, email });
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Email already exists.' });
+    if (err.code === 'ER_DUP_ENTRY' || err.message?.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Email already exists.' });
+    }
     res.status(500).json({ error: err.message });
   }
 });
@@ -44,7 +46,9 @@ router.put('/:id', async (req, res) => {
     await pool.query('UPDATE staff SET name=?, email=?, password=? WHERE id=?', [name, email, password, req.params.id]);
     res.json({ success: true });
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Email already exists.' });
+    if (err.code === 'ER_DUP_ENTRY' || err.message?.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Email already exists.' });
+    }
     res.status(500).json({ error: err.message });
   }
 });

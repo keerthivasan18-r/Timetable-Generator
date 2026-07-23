@@ -27,8 +27,8 @@ router.put('/', async (req, res) => {
   try {
     const strValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
     await pool.query(
-      'INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=?',
-      [key, strValue, strValue]
+      'INSERT OR REPLACE INTO settings (setting_key, setting_value) VALUES (?, ?)',
+      [key, strValue]
     );
     res.json({ success: true });
   } catch (err) {
