@@ -3,7 +3,7 @@
  * Falls back to localStorage when server is unavailable (offline mode).
  */
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 import { validateSectionPeriods, validateSchedulerData } from './validation.js';
 
 // ─── localStorage helpers (fallback + session storage) ────────────────────────
@@ -148,45 +148,17 @@ function initLocalFallback() {
 initLocalFallback();
 
 // ─── API helper ────────────────────────────────────────────────────────────────
-let isServerOnline = true;
-
-// Periodically check if the server is back online in the background
-setInterval(async () => {
-  try {
-    const controller = new AbortController();
-    const tId = setTimeout(() => controller.abort(), 200);
-    const res = await fetch(`${API_BASE}/health`, { signal: controller.signal });
-    clearTimeout(tId);
-    if (res.ok) isServerOnline = true;
-  } catch {
-    isServerOnline = false;
-  }
-}, 5000);
-
 async function apiCall(method, endpoint, body = null) {
-  // Fast fail: if server is cached offline, skip connection wait
-  if (!isServerOnline && endpoint !== '/health') {
-    return { ok: false, status: 0, data: null, offline: true };
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 200); // 200ms limit
-
   try {
     const opts = {
       method,
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal
+      headers: { 'Content-Type': 'application/json' }
     };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(`${API_BASE}${endpoint}`, opts);
-    clearTimeout(timeoutId);
     const data = await res.json();
-    isServerOnline = true;
     return { ok: res.ok, status: res.status, data };
   } catch {
-    clearTimeout(timeoutId);
-    isServerOnline = false;
     return { ok: false, status: 0, data: null, offline: true };
   }
 }
