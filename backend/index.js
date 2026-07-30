@@ -11,6 +11,9 @@ import settingsRoutes from './routes/settings.js';
 import sessionsRoutes from './routes/sessions.js';
 import emailLogsRoutes from './routes/email_logs.js';
 import labSlotsRoutes from './routes/lab_slots.js';
+import labRoomsRoutes from './routes/lab_rooms.js';
+import electivesRoutes from './routes/electives.js';
+import { seedAcademicData } from './db/seedAcademicData.js';
 
 dotenv.config();
 
@@ -55,6 +58,81 @@ async function runMigrations() {
       ('3-A', 'Third Year'),
       ('3-B', 'Third Year')
     `);
+
+    // 4. Create Elective tables if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS electives (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        department TEXT NOT NULL DEFAULT 'Computer Science',
+        semester INTEGER NOT NULL DEFAULT 5,
+        class TEXT NOT NULL DEFAULT '3-A',
+        academic_year TEXT NOT NULL DEFAULT 'Third Year',
+        enabled INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS elective_courses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        elective_id TEXT NOT NULL,
+        subject_id TEXT NOT NULL,
+        subject_name TEXT NOT NULL,
+        faculty_id TEXT,
+        weekly_hours INTEGER DEFAULT 4,
+        capacity INTEGER DEFAULT 35,
+        student_count INTEGER DEFAULT 0,
+        FOREIGN KEY (elective_id) REFERENCES electives(id) ON DELETE CASCADE,
+        FOREIGN KEY (faculty_id) REFERENCES staff(id) ON DELETE SET NULL
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS elective_groups (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        elective_course_id INTEGER NOT NULL,
+        student_count INTEGER DEFAULT 0,
+        FOREIGN KEY (elective_course_id) REFERENCES elective_courses(id) ON DELETE CASCADE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS student_electives (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT NOT NULL,
+        student_name TEXT DEFAULT '',
+        elective_course_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (elective_course_id) REFERENCES elective_courses(id) ON DELETE CASCADE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS elective_schedule (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        day INTEGER NOT NULL,
+        period INTEGER NOT NULL,
+        elective_id TEXT NOT NULL,
+        FOREIGN KEY (elective_id) REFERENCES electives(id) ON DELETE CASCADE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS elective_slots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        semester INTEGER NOT NULL,
+        class TEXT NOT NULL,
+        day INTEGER NOT NULL,
+        period INTEGER NOT NULL,
+        locked INTEGER DEFAULT 1,
+        UNIQUE(semester, class, day, period)
+      )
+    `);
+
+    // Seed B.Sc Computer Science academic structure
+    await seedAcademicData();
   } catch (err) {
     console.error("Migration error:", err.message);
   }
@@ -90,6 +168,9 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/sessions', sessionsRoutes);
 app.use('/api/email-logs', emailLogsRoutes);
 app.use('/api/lab-slots', labSlotsRoutes);
+app.use('/api/lab-rooms', labRoomsRoutes);
+app.use('/api/electives', electivesRoutes);
+
 
 // Start server
 if (process.env.NODE_ENV !== 'test') {

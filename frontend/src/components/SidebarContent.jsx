@@ -43,7 +43,7 @@ export function SidebarContent({
           <div className="sidebar-section-label">Core</div>
         )}
 
-        {navItems.slice(0, user.role === 'hod' ? 4 : navItems.length).map(item => (
+        {navItems.slice(0, user.role === 'hod' ? 5 : navItems.length).map(item => (
           <button
             key={item.id}
             id={`nav-${item.id}`}
@@ -62,7 +62,7 @@ export function SidebarContent({
         {user.role === 'hod' && (
           <>
             <div className="sidebar-section-label" style={{ marginTop: '8px' }}>System</div>
-            {navItems.slice(4).map(item => (
+            {navItems.slice(5).map(item => (
               <button
                 key={item.id}
                 id={`nav-${item.id}`}

@@ -58,9 +58,65 @@ function initLocalFallback() {
   if (!LS.get('_emailLogs')) LS.set('_emailLogs', []);
   if (!LS.get('_sessions')) LS.set('_sessions', []);
   if (!LS.get('_notifications')) LS.set('_notifications', []);
+
+  if (!LS.get('_electives')) {
+    LS.set('_electives', [
+      {
+        id: 'ELEC001',
+        name: 'Elective-I',
+        department: 'Computer Science',
+        semester: 5,
+        class: '3-A',
+        academic_year: 'Third Year',
+        enabled: true,
+        courses: [
+          {
+            id: 1,
+            elective_id: 'ELEC001',
+            subject_id: 'CS501',
+            subject_name: 'Software Engineering',
+            faculty_id: 'STF001',
+            faculty_name: 'Mr. Kumar',
+            weekly_hours: 4,
+            capacity: 35,
+            student_count: 30,
+            students: Array.from({ length: 30 }, (_, i) => ({ student_id: `CS260${String(i + 1).padStart(2, '0')}`, student_name: `Student A${i + 1}` }))
+          },
+          {
+            id: 2,
+            elective_id: 'ELEC001',
+            subject_id: 'CS502',
+            subject_name: 'Artificial Intelligence',
+            faculty_id: 'STF002',
+            faculty_name: 'Mrs. Priya',
+            weekly_hours: 4,
+            capacity: 35,
+            student_count: 30,
+            students: Array.from({ length: 30 }, (_, i) => ({ student_id: `CS260${String(i + 31).padStart(2, '0')}`, student_name: `Student B${i + 1}` }))
+          }
+        ],
+        slots: [
+          { semester: 5, class: '3-A', day: 1, period: 2 },
+          { semester: 5, class: '3-A', day: 3, period: 5 },
+          { semester: 5, class: '3-A', day: 4, period: 4 },
+          { semester: 5, class: '3-A', day: 5, period: 1 }
+        ]
+      }
+    ]);
+  }
+
+  if (!LS.get('_electiveSlots')) {
+    LS.set('_electiveSlots', [
+      { id: 1, semester: 5, class: '3-A', day: 1, period: 2, locked: 1 },
+      { id: 2, semester: 5, class: '3-A', day: 3, period: 5, locked: 1 },
+      { id: 3, semester: 5, class: '3-A', day: 4, period: 4, locked: 1 },
+      { id: 4, semester: 5, class: '3-A', day: 5, period: 1, locked: 1 }
+    ]);
+  }
 }
 
 initLocalFallback();
+
 
 // ─── API helper ────────────────────────────────────────────────────────────────
 async function apiCall(method, endpoint, body = null) {
@@ -294,21 +350,39 @@ export const db = {
     }
   },
 
-  // ── Lab Slots ────────────────────────────────────────────────────────────────
+  // ── Lab Rooms & Slots ────────────────────────────────────────────────────────
+  async getLabRooms() {
+    const res = await apiCall('GET', '/lab-rooms');
+    if (res.ok) { LS.set('_labRooms', res.data); return res.data; }
+    return LS.get('_labRooms', [
+      { id: 'L1', name: 'Lab A', department: 'Computer Science', capacity: 30, enabled: 1 },
+      { id: 'L2', name: 'Lab B', department: 'Computer Science', capacity: 30, enabled: 1 },
+      { id: 'L3', name: 'Lab C', department: 'Computer Science', capacity: 30, enabled: 1 }
+    ]);
+  },
+
   async getLabSlots() {
     const res = await apiCall('GET', '/lab-slots');
     if (res.ok) { LS.set('_labSlots', res.data); return res.data; }
     return LS.get('_labSlots', []);
   },
 
-  async setLabSlot({ section, dayOrder, period, subjectId, staffId }) {
+  async setLabSlot({ section, dayOrder, period, subjectId, staffId, labRoomId }) {
+    const defaultRoom = labRoomId || (section.endsWith('B') ? 'L2' : 'L1');
     const slots = LS.get('_labSlots', []);
     const key = s => `${s.section}_${s.day_order || s.dayOrder}_${s.period}`;
     const idx = slots.findIndex(s => key(s) === `${section}_${dayOrder}_${period}`);
-    const newSlot = { section, day_order: dayOrder, dayOrder, period, subject_id: subjectId, staff_id: staffId, subjectId, staffId };
+    const newSlot = {
+      section, day_order: dayOrder, dayOrder, period,
+      subject_id: subjectId, staff_id: staffId, lab_room_id: defaultRoom,
+      subjectId, staffId, labRoomId: defaultRoom
+    };
     if (idx !== -1) slots[idx] = newSlot; else slots.push(newSlot);
     LS.set('_labSlots', slots);
-    await apiCall('POST', '/lab-slots', { section, dayOrder, period, subjectId, staffId });
+    const res = await apiCall('POST', '/lab-slots', { section, dayOrder, period, subjectId, staffId, labRoomId: defaultRoom });
+    if (!res.ok) {
+      throw new Error(res.error || 'Failed to save lab slot.');
+    }
   },
 
   async removeLabSlot({ section, dayOrder, period }) {
@@ -411,11 +485,261 @@ export const db = {
   },
 
   // ── Pre-generation Validation ───────────────────────────────────────────────
-  async validateTimetableData(staff, subjects, assignments, settings) {
-    const res = await apiCall('POST', '/timetable/validate', { staff, subjects, assignments, settings });
+  async validateTimetableData(staff, subjects, assignments, settings, electives, electiveSlots) {
+    const res = await apiCall('POST', '/timetable/validate', { staff, subjects, assignments, settings, electives, electiveSlots });
     if (res.ok && res.data) return res.data;
     // Fallback to client-side validation logic
-    return validateSchedulerData(staff, subjects, assignments, settings);
+    return validateSchedulerData(staff, subjects, assignments, { ...settings, electives, electiveSlots });
+  },
+
+  // ── Electives API ─────────────────────────────────────────────────────────────
+  async getElectives() {
+    const res = await apiCall('GET', '/electives');
+    if (res.ok) {
+      LS.set('_electives', res.data);
+      return res.data;
+    }
+    return LS.get('_electives', []);
+  },
+
+  async addElective(data) {
+    const res = await apiCall('POST', '/electives', data);
+    if (res.ok) {
+      await this.getElectives();
+      return res.data;
+    }
+    const electives = LS.get('_electives', []);
+    const newElec = {
+      id: data.id || `ELEC_${Date.now()}`,
+      name: data.name,
+      department: data.department || 'Computer Science',
+      semester: parseInt(data.semester) || 5,
+      class: data.class || '3-A',
+      academic_year: data.academic_year || 'Third Year',
+      enabled: data.enabled !== undefined ? Boolean(data.enabled) : true,
+      courses: [],
+      slots: []
+    };
+    electives.unshift(newElec);
+    LS.set('_electives', electives);
+    return newElec;
+  },
+
+  async updateElective(id, data) {
+    const res = await apiCall('PUT', `/electives/${id}`, data);
+    if (res.ok) {
+      await this.getElectives();
+      return;
+    }
+    const electives = LS.get('_electives', []);
+    const idx = electives.findIndex(e => e.id === id);
+    if (idx !== -1) {
+      electives[idx] = { ...electives[idx], ...data };
+      LS.set('_electives', electives);
+    }
+  },
+
+  async deleteElective(id) {
+    await apiCall('DELETE', `/electives/${id}`);
+    const electives = LS.get('_electives', []).filter(e => e.id !== id);
+    LS.set('_electives', electives);
+  },
+
+  async toggleElective(id, enabled) {
+    const res = await apiCall('POST', `/electives/${id}/toggle`, { enabled });
+    if (res.ok) {
+      await this.getElectives();
+      return;
+    }
+    const electives = LS.get('_electives', []);
+    const idx = electives.findIndex(e => e.id === id);
+    if (idx !== -1) {
+      electives[idx].enabled = Boolean(enabled);
+      LS.set('_electives', electives);
+    }
+  },
+
+  async addElectiveCourse(electiveId, courseData) {
+    const res = await apiCall('POST', `/electives/${electiveId}/courses`, courseData);
+    if (res.ok) {
+      await this.getElectives();
+      return res.data;
+    }
+    const electives = LS.get('_electives', []);
+    const elec = electives.find(e => e.id === electiveId);
+    if (elec) {
+      if (!elec.courses) elec.courses = [];
+      const staffList = LS.get('_staff', []);
+      const stf = staffList.find(s => s.id === courseData.faculty_id);
+      elec.courses.push({
+        id: Date.now(),
+        elective_id: electiveId,
+        subject_id: courseData.subject_id,
+        subject_name: courseData.subject_name || courseData.subject_id,
+        faculty_id: courseData.faculty_id,
+        faculty_name: stf ? stf.name : 'Faculty',
+        weekly_hours: parseInt(courseData.weekly_hours) || 4,
+        capacity: parseInt(courseData.capacity) || 35,
+        student_count: parseInt(courseData.student_count) || 0
+      });
+      LS.set('_electives', electives);
+    }
+  },
+
+  async updateElectiveCourse(courseId, courseData) {
+    const res = await apiCall('PUT', `/electives/courses/${courseId}`, courseData);
+    if (res.ok) {
+      await this.getElectives();
+      return;
+    }
+    const electives = LS.get('_electives', []);
+    const staffList = LS.get('_staff', []);
+    electives.forEach(e => {
+      if (e.courses) {
+        const cIdx = e.courses.findIndex(c => c.id === courseId);
+        if (cIdx !== -1) {
+          const stf = staffList.find(s => s.id === courseData.faculty_id);
+          e.courses[cIdx] = {
+            ...e.courses[cIdx],
+            ...courseData,
+            faculty_name: stf ? stf.name : 'Faculty'
+          };
+        }
+      }
+    });
+    LS.set('_electives', electives);
+  },
+
+  async deleteElectiveCourse(courseId) {
+    await apiCall('DELETE', `/electives/courses/${courseId}`);
+    const electives = LS.get('_electives', []);
+    electives.forEach(e => {
+      if (e.courses) e.courses = e.courses.filter(c => c.id !== courseId);
+    });
+    LS.set('_electives', electives);
+  },
+
+  async distributeStudents(electiveId, mode, distributions, totalStudents) {
+    const res = await apiCall('POST', `/electives/${electiveId}/distribute`, { mode, distributions, totalStudents });
+    if (res.ok) {
+      await this.getElectives();
+      return;
+    }
+    // Fallback local distribution
+    const electives = LS.get('_electives', []);
+    const elec = electives.find(e => e.id === electiveId);
+    if (elec && elec.courses) {
+      if (mode === 'auto') {
+        const total = parseInt(totalStudents) || 60;
+        const count = Math.floor(total / elec.courses.length);
+        const rem = total % elec.courses.length;
+        let roll = 1;
+        elec.courses.forEach((c, idx) => {
+          c.student_count = count + (idx < rem ? 1 : 0);
+          c.students = Array.from({ length: c.student_count }, (_, i) => ({
+            student_id: `CS${26000 + roll++}`,
+            student_name: `Student ${roll}`
+          }));
+        });
+      } else if (mode === 'manual' && Array.isArray(distributions)) {
+        distributions.forEach(d => {
+          const c = elec.courses.find(course => course.id === d.courseId);
+          if (c) {
+            c.student_count = d.studentCount || (d.studentIds ? d.studentIds.length : 0);
+          }
+        });
+      }
+      LS.set('_electives', electives);
+    }
+  },
+
+  async getElectiveSlots() {
+    const res = await apiCall('GET', '/electives/slots');
+    if (res.ok) {
+      LS.set('_electiveSlots', res.data);
+      return res.data;
+    }
+    return LS.get('_electiveSlots', []);
+  },
+
+  async saveElectiveSlots(semester, className, slots, sections) {
+    const res = await apiCall('POST', '/electives/slots', { semester, class: className, sections, slots });
+    if (res.ok) {
+      await this.getElectiveSlots();
+      return;
+    }
+    const targetSecs = Array.isArray(sections) && sections.length > 0 ? sections : [className];
+    let currentSlots = LS.get('_electiveSlots', []).filter(s => !(s.semester === parseInt(semester) && targetSecs.includes(s.class)));
+    for (const sec of targetSecs) {
+      const newSlots = slots.map((s, idx) => ({
+        id: Date.now() + idx + Math.random(),
+        semester: parseInt(semester),
+        class: sec,
+        day: parseInt(s.day),
+        period: parseInt(s.period),
+        locked: 1
+      }));
+      currentSlots = [...currentSlots, ...newSlots];
+    }
+    LS.set('_electiveSlots', currentSlots);
+  },
+
+  async getElectiveReports() {
+    const res = await apiCall('GET', '/electives/reports');
+    if (res.ok) return res.data;
+    
+    // Offline fallback report data
+    const electives = LS.get('_electives', []);
+    const staffList = LS.get('_staff', []);
+    const slots = LS.get('_electiveSlots', []);
+
+    const summaryReport = electives.map(e => {
+      const courses = e.courses || [];
+      const totalStudents = courses.reduce((sum, c) => sum + (c.student_count || 0), 0);
+      const totalCapacity = courses.reduce((sum, c) => sum + (c.capacity || 0), 0);
+      const configuredSlots = slots.filter(s => s.semester === e.semester && s.class === e.class).length;
+      return {
+        id: e.id,
+        name: e.name,
+        department: e.department,
+        semester: e.semester,
+        class: e.class,
+        enabled: Boolean(e.enabled),
+        coursesCount: courses.length,
+        totalStudents,
+        totalCapacity,
+        configuredSlots,
+        weeklyHoursNeeded: courses[0]?.weekly_hours || 4
+      };
+    });
+
+    const allocationReport = [];
+    electives.forEach(e => {
+      (e.courses || []).forEach(c => {
+        const stf = staffList.find(s => s.id === c.faculty_id);
+        allocationReport.push({
+          courseId: c.id,
+          electiveId: e.id,
+          electiveName: e.name,
+          class: e.class,
+          subjectId: c.subject_id,
+          subjectName: c.subject_name || c.subject_id,
+          facultyId: c.faculty_id,
+          facultyName: stf ? stf.name : (c.faculty_name || 'Not Assigned'),
+          weeklyHours: c.weekly_hours,
+          capacity: c.capacity,
+          studentCount: c.student_count,
+          enrolledCount: (c.students || []).length || c.student_count
+        });
+      });
+    });
+
+    return {
+      summaryReport,
+      allocationReport,
+      studentList: []
+    };
   }
 };
+
 

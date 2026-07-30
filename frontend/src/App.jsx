@@ -7,7 +7,7 @@ import {
   Calendar, LogOut, Users, BookOpen, Mail, Bell,
   Shield, Sun, Moon, FlaskConical, UserCheck, BarChart3,
   GraduationCap, Lock, Eye, EyeOff, ArrowRight, Clock,
-  ChevronRight, Cpu, RefreshCw, Menu
+  ChevronRight, Cpu, RefreshCw, Menu, Layers
 } from 'lucide-react';
 import { SidebarProvider, useSidebar } from './components/SidebarContext';
 import { ResponsiveSidebar, FloatingMenuButton } from './components/ResponsiveSidebar';
@@ -28,6 +28,7 @@ const NAV_COLORS = {
   'staff-list':   'purple',
   'subjects-list':'emerald',
   'lab-scheduler':'indigo',
+  electives:      'purple',
   'active-users': 'green',
   'email-logs':   'cyan',
   notifications:  'orange',
@@ -39,6 +40,7 @@ const PAGE_TITLES = {
   'staff-list':   'Staff Records',
   'subjects-list':'Courses & Assign',
   'lab-scheduler':'Manual Scheduler',
+  electives:      'Elective Subjects',
   'active-users': 'Active Users',
   'email-logs':   'Email Logs',
   notifications:  'Notifications',
@@ -120,6 +122,7 @@ function AppContent() {
     { id: 'staff-list',      label: 'Staff Records',    icon: <Users size={17} /> },
     { id: 'subjects-list',   label: 'Courses & Assign', icon: <BookOpen size={17} /> },
     { id: 'lab-scheduler',   label: 'Manual Scheduler', icon: <FlaskConical size={17} /> },
+    { id: 'electives',       label: 'Elective Subjects',icon: <Layers size={17} /> },
     { id: 'active-users',    label: 'Active Users',     icon: <UserCheck size={17} />, badge: null },
     { id: 'email-logs',      label: 'Email Logs',       icon: <Mail size={17} /> },
     { id: 'notifications',   label: 'Notifications',    icon: <Bell size={17} />, badge: unreadCount > 0 ? unreadCount : null },

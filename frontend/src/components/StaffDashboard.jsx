@@ -42,8 +42,16 @@ export default function StaffDashboard({ user }) {
         for (let d = 1; d <= dayCount; d++) {
           for (let p = 1; p <= periodCount; p++) {
             const slot = table[d]?.[p];
-            if (slot && slot.staffId === user.id) {
-              schedule[d][p].push({ section: sec, subjectId: slot.subjectId, subjectName: slot.subjectName });
+            if (slot && slot.staffId) {
+              const isMyClass = slot.staffId === user.id || slot.staffId.split('/').includes(user.id);
+              if (isMyClass) {
+                schedule[d][p].push({
+                  section: sec,
+                  subjectId: slot.subjectId,
+                  subjectName: slot.subjectName,
+                  isElective: Boolean(slot.isElective)
+                });
+              }
             }
           }
         }

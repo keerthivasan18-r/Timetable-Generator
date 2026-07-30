@@ -5,6 +5,7 @@ import { MAX_WEEKLY_PERIODS, validateSectionPeriods, getSectionsFromYear } from 
 import ActiveUsersPanel from './ActiveUsersPanel';
 import LabScheduler from './LabScheduler';
 import ValidationReportModal from './ValidationReportModal';
+import ElectivesModule from './ElectivesModule';
 import {
   Users, BookOpen, RefreshCw, CheckCircle, AlertTriangle,
   Trash, Plus, Edit, Mail, Save, Send, HelpCircle, Calendar,
@@ -90,14 +91,32 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
   // Load all data — UNCHANGED
   const loadData = useCallback(async (showFeedback = false) => {
     setLoading(true);
-    const [s, sub, a, sett, t, logs, slots] = await Promise.all([
+    const [s, sub, a, sett, t, logs, slots, electivesList, electiveSlotsList] = await Promise.all([
       db.getStaff(), db.getSubjects(), db.getAssignments(),
       db.getSettings(), db.getTimetable(), db.getSimLogs(),
-      db.getLabSlots()
+      db.getLabSlots(), db.getElectives(), db.getElectiveSlots()
     ]);
     setStaff(s); setSubjects(sub); setAssignments(a);
-    setSettings(sett); setTimetable(t); setSimLogs(logs); setLabSlots(slots);
-    if (t.tables) { const c = validateTimetable(t.tables, s, sub, sett); setConflicts(c); }
+    setSettings(sett); setSimLogs(logs); setLabSlots(slots);
+
+    let activeTables = t.tables;
+    if (!activeTables) {
+      const res = generateTimetable(s, sub, a, sett, slots, electivesList, electiveSlotsList);
+      if (res.success) {
+        activeTables = res.tables;
+        await db.saveTimetable(activeTables, 'draft');
+        setTimetable({ status: 'draft', tables: activeTables });
+      } else {
+        setTimetable(t);
+      }
+    } else {
+      setTimetable(t);
+    }
+
+    if (activeTables) {
+      const c = validateTimetable(activeTables, s, sub, sett);
+      setConflicts(c);
+    }
     setLoading(false);
     if (showFeedback) showBanner('success', 'Data refreshed from database.');
   }, []);
@@ -249,16 +268,21 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
 
   // Timetable — Pre-generation production-grade validation engine
   const handleGenerate = async () => {
+    const [labSlots, electivesList, electiveSlotsList] = await Promise.all([
+      db.getLabSlots(),
+      db.getElectives(),
+      db.getElectiveSlots()
+    ]);
+
     // 1. Run 100% pre-generation data validation across all 8 mandatory rules
-    const valRes = await db.validateTimetableData(staff, subjects, assignments, settings);
+    const valRes = await db.validateTimetableData(staff, subjects, assignments, settings, electivesList, electiveSlotsList);
     if (!valRes.canGenerate && valRes.errors && valRes.errors.length > 0) {
       setValidationErrors(valRes.errors);
       setShowValidationModal(true);
       return; // STOP! Do NOT execute scheduling algorithm if any validation fails
     }
 
-    const labSlots = await db.getLabSlots();
-    const res = generateTimetable(staff, subjects, assignments, settings, labSlots);
+    const res = generateTimetable(staff, subjects, assignments, settings, labSlots, electivesList, electiveSlotsList);
     if (res.success) {
       await db.saveTimetable(res.tables, 'draft');
       setTimetable({ status: 'draft', tables: res.tables });
@@ -548,11 +572,46 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
                             title={cell ? `${cell.subjectName} — ${cell.staffName}` : 'Click to assign'}
                           >
                             {!isFree && cell ? (
-                              <>
-                                <div className="cell-subject">{cell.subjectId}</div>
-                                <div className="cell-name">{cell.subjectName}</div>
-                                <div className="cell-teacher">{cell.staffName}</div>
-                              </>
+                              cell.isOff ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5, padding: '4px' }}>
+                                  <span className="badge badge-gray" style={{ fontSize: '0.62rem' }}>⏹ NO PERIOD</span>
+                                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>{cell.subjectName || 'No Class'}</span>
+                                </div>
+                              ) : cell.isNME ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%', textAlign: 'center' }}>
+                                  <span className="badge badge-indigo" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>⚡ NME Session</span>
+                                  <div style={{ fontWeight: 700, color: 'white', fontSize: '0.75rem' }}>NME (12:40 - 1:30 PM)</div>
+                                  <div style={{ fontSize: '0.6rem', color: 'var(--accent-indigo)' }}>External Faculty</div>
+                                </div>
+                              ) : cell.isElective ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <span className="badge badge-purple" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Elective</span>
+                                    <span style={{ fontSize: '0.6rem', color: 'var(--purple-light)' }}>{cell.courses?.length || 2} Subjects</span>
+                                  </div>
+                                  {cell.courses ? (
+                                    cell.courses.map((c, i) => (
+                                      <div key={i} style={{ fontSize: '0.68rem', borderTop: i > 0 ? '1px dashed rgba(255,255,255,0.15)' : 'none', paddingTop: i > 0 ? '3px' : 0 }}>
+                                        <div style={{ fontWeight: 600, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.subjectName}</div>
+                                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>Fac: {c.staffName}</div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="cell-name">{cell.subjectName}</div>
+                                  )}
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="cell-subject">{cell.subjectId}</div>
+                                  <div className="cell-name">{cell.subjectName}</div>
+                                  <div className="cell-teacher">{cell.staffName}</div>
+                                </>
+                              )
+                            ) : p === 5 && (activeSection === '1-A' || activeSection === '1-B') && (day === 1 || day === 2) ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5, padding: '4px' }}>
+                                <span className="badge badge-gray" style={{ fontSize: '0.62rem' }}>⏹ NO PERIOD</span>
+                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>NME Finish</span>
+                              </div>
                             ) : (
                               <div className="cell-subject">{isFree ? 'Study' : '—'}</div>
                             )}
@@ -1318,6 +1377,22 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
             )}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // RENDER: ELECTIVE SUBJECTS
+  // ════════════════════════════════════════════════════════════════════════════
+  if (activePanel === 'electives') {
+    return (
+      <div className="fade-in">
+        <ElectivesModule
+          staff={staff}
+          subjects={subjects}
+          settings={settings}
+          onTimetableRefresh={loadData}
+        />
       </div>
     );
   }

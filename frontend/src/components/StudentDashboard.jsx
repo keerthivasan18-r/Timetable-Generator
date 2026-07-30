@@ -6,6 +6,7 @@ export default function StudentDashboard({ user }) {
   const [timetable, setTimetable] = useState(null);
   const [settings, setSettings] = useState({});
   const [notifications, setNotifications] = useState([]);
+  const [selectedElectiveSubject, setSelectedElectiveSubject] = useState('Software Engineering');
 
   useEffect(() => {
     loadData();
@@ -33,10 +34,25 @@ export default function StudentDashboard({ user }) {
             Register No: <strong style={{ color: 'white' }}>{user.regNo}</strong> | Class: <strong style={{ color: 'var(--accent-indigo)' }}>B.Sc. CS - Section {user.section}</strong>
           </p>
         </div>
-        <span className="badge badge-indigo" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <GraduationCap size={14} />
-          Student Account
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--glass-border)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Elective Track:</span>
+            <select
+              value={selectedElectiveSubject}
+              onChange={e => setSelectedElectiveSubject(e.target.value)}
+              style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <option value="Software Engineering" style={{ background: '#111' }}>Software Engineering (Group A)</option>
+              <option value="Artificial Intelligence" style={{ background: '#111' }}>Artificial Intelligence (Group B)</option>
+              <option value="Cloud Computing" style={{ background: '#111' }}>Cloud Computing (Group C)</option>
+              <option value="Data Mining" style={{ background: '#111' }}>Data Mining (Group D)</option>
+            </select>
+          </div>
+          <span className="badge badge-indigo" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <GraduationCap size={14} />
+            Student Account
+          </span>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
@@ -94,24 +110,57 @@ export default function StudentDashboard({ user }) {
 
                       {Array.from({ length: settings.dayOrdersCount }).map((_, dIdx) => {
                         const dayOrder = dIdx + 1;
-                        const slot = timetable.tables[user.section]?.[dayOrder]?.[periodNo];
-                        const isLab = slot?.subjectId === 'CS103' || slot?.subjectName.toLowerCase().includes('lab');
+                        const rawSlot = timetable.tables[user.section]?.[dayOrder]?.[periodNo];
+
+                        let slot = rawSlot;
+                        if (rawSlot?.isElective && rawSlot?.courses && rawSlot.courses.length > 0) {
+                          const chosen = rawSlot.courses.find(c => c.subjectId === selectedElectiveSubject || c.subjectName === selectedElectiveSubject) || rawSlot.courses[0];
+                          slot = {
+                            subjectId: chosen.subjectId,
+                            subjectName: chosen.subjectName,
+                            staffName: chosen.staffName,
+                            isElective: true,
+                            electiveName: rawSlot.electiveName
+                          };
+                        }
+
+                        const isLab = slot?.subjectId === 'CS103' || slot?.subjectName?.toLowerCase().includes('lab');
                         const isFree = slot?.subjectId === 'FREE';
+                        const isFirstYear = user?.section?.startsWith('1');
+                        const isNoPeriod = periodNo === 5 && isFirstYear && (dayOrder === 1 || dayOrder === 2);
 
                         return (
                           <div 
                             key={dIdx} 
                             className={`timetable-cell ${isLab ? 'lab' : ''} ${isFree ? 'free' : ''}`}
-                            style={{ cursor: 'default' }}
+                            style={{ cursor: 'default', opacity: isNoPeriod ? 0.45 : 1 }}
                           >
-                            <div className="cell-subject">{slot?.subjectId === 'FREE' ? 'Study' : slot?.subjectId}</div>
-                            <div className="cell-faculty" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {slot?.subjectName}
-                            </div>
-                            <div style={{ display: 'flex', justifyItems: 'space-between', alignItems: 'center', marginTop: 'auto', width: '100%' }}>
-                              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{slot?.staffName}</span>
-                              <span className="cell-slot" style={{ marginLeft: 'auto' }}>P{periodNo}</span>
-                            </div>
+                            {slot?.isNME ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%', textAlign: 'center' }}>
+                                <span className="badge badge-indigo" style={{ fontSize: '0.6rem' }}>⚡ NME Session</span>
+                                <div style={{ fontWeight: 700, color: 'white', fontSize: '0.72rem' }}>NME (12:40-1:30 PM)</div>
+                                <span className="cell-slot" style={{ marginTop: 'auto' }}>P{periodNo}</span>
+                              </div>
+                            ) : isNoPeriod ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '2px' }}>
+                                <span className="badge badge-gray" style={{ fontSize: '0.6rem' }}>⏹ END OF DAY</span>
+                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>NME Finish</span>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="cell-subject" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <span>{slot?.subjectId === 'FREE' ? 'Study' : slot?.subjectId}</span>
+                                  {slot?.isElective && <span className="badge badge-purple" style={{ fontSize: '0.58rem', padding: '0px 4px' }}>Elective</span>}
+                                </div>
+                                <div className="cell-faculty" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {slot?.subjectName}
+                                </div>
+                                <div style={{ display: 'flex', justifyItems: 'space-between', alignItems: 'center', marginTop: 'auto', width: '100%' }}>
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{slot?.staffName}</span>
+                                  <span className="cell-slot" style={{ marginLeft: 'auto' }}>P{periodNo}</span>
+                                </div>
+                              </>
+                            )}
                           </div>
                         );
                       })}

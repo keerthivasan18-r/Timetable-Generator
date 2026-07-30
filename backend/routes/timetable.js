@@ -7,22 +7,37 @@ const router = express.Router();
 // POST /api/timetable/validate — Production-grade pre-generation validation
 router.post('/validate', async (req, res) => {
   try {
-    let { staff, subjects, assignments, settings } = req.body || {};
+    let { staff, subjects, assignments, settings, electives, electiveSlots } = req.body || {};
 
     // If payload elements are missing, fetch current database state directly
     if (!staff || !subjects || !assignments) {
       const [staffRows] = await pool.query('SELECT id, name, email FROM staff');
       const [subjectRows] = await pool.query('SELECT id, name, type, periods, year FROM subjects');
-      const [asgnRows] = await pool.query('SELECT section, subject_id AS subjectId, staff_id AS staffId FROM assignments');
-      const [settingsRows] = await pool.query('SELECT periods_per_day, day_orders_count FROM settings LIMIT 1');
+      const [asgnRows] = await pool.query('SELECT section, subject_id AS subjectId, staff_id AS staffId FROM course_assignments');
+      const [settingsRows] = await pool.query('SELECT setting_key, setting_value FROM settings');
 
       staff = staffRows;
       subjects = subjectRows;
       assignments = asgnRows;
-      settings = settingsRows[0] || {};
+
+      const settingsObj = {};
+      settingsRows.forEach(row => { settingsObj[row.setting_key] = row.setting_value; });
+      settings = settingsObj;
     }
 
-    const result = validateSchedulerData({ staff, subjects, assignments, settings });
+    if (!electives) {
+      const [elecRows] = await pool.query('SELECT * FROM electives');
+      const [courseRows] = await pool.query('SELECT * FROM elective_courses');
+      const [slotRows] = await pool.query('SELECT * FROM elective_slots');
+      
+      electives = elecRows.map(e => ({
+        ...e,
+        courses: courseRows.filter(c => c.elective_id === e.id)
+      }));
+      electiveSlots = slotRows;
+    }
+
+    const result = validateSchedulerData({ staff, subjects, assignments, settings, electives, electiveSlots });
     res.json(result);
   } catch (err) {
     res.status(500).json({
@@ -54,11 +69,12 @@ router.put('/', async (req, res) => {
   const { tables, status } = req.body;
   try {
     const tablesJson = tables ? JSON.stringify(tables) : null;
+    const targetStatus = status || 'draft';
     const [existing] = await pool.query('SELECT id FROM timetable LIMIT 1');
     if (existing.length > 0) {
-      await pool.query('UPDATE timetable SET tables_json=?, status=? WHERE id=?', [tablesJson, status || 'draft', existing[0].id]);
+      await pool.query('UPDATE timetable SET tables_json=?, status=?, updated_at=DATETIME("now", "localtime") WHERE id=?', [tablesJson, targetStatus, existing[0].id]);
     } else {
-      await pool.query('INSERT INTO timetable (tables_json, status) VALUES (?, ?)', [tablesJson, status || 'draft']);
+      await pool.query('INSERT INTO timetable (tables_json, status) VALUES (?, ?)', [tablesJson, targetStatus]);
     }
     res.json({ success: true });
   } catch (err) {
@@ -73,7 +89,9 @@ router.post('/publish', async (req, res) => {
     const tablesJson = tables ? JSON.stringify(tables) : null;
     const [existing] = await pool.query('SELECT id FROM timetable LIMIT 1');
     if (existing.length > 0) {
-      await pool.query('UPDATE timetable SET tables_json=?, status="published" WHERE id=?', [tablesJson, existing[0].id]);
+      await pool.query("UPDATE timetable SET tables_json=?, status='published', updated_at=DATETIME('now', 'localtime') WHERE id=?", [tablesJson, existing[0].id]);
+    } else {
+      await pool.query("INSERT INTO timetable (tables_json, status) VALUES (?, 'published')", [tablesJson]);
     }
 
     // Add notification

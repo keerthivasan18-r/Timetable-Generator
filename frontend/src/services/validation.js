@@ -1,5 +1,12 @@
 export const MAX_WEEKLY_PERIODS = 30;
 
+export function getMaxWeeklyPeriods(yearOrSection) {
+  if (yearOrSection === 'First Year' || yearOrSection === '1-A' || yearOrSection === '1-B') {
+    return 28; // 26 core subject slots + 2 NME slots (DO 1,2 P5) = 28 total subject slots
+  }
+  return 30;
+}
+
 /**
  * Maps an academic year to its respective sections.
  * @param {string} year
@@ -50,15 +57,16 @@ export function validateSectionPeriods({ year, subjectId, newPeriods, subjects }
   }
 
   const newTotal = currentTotal - oldPeriods + newPeriods;
+  const maxAllowed = getMaxWeeklyPeriods(year);
   
-  if (newTotal > MAX_WEEKLY_PERIODS) {
+  if (newTotal > maxAllowed) {
     const sections = getSectionsFromYear(year);
     const representativeSection = sections[0] || '1-A';
     
     return {
       valid: false,
       section: representativeSection,
-      maximum: MAX_WEEKLY_PERIODS,
+      maximum: maxAllowed,
       current: currentTotal - oldPeriods,
       attempted: newPeriods,
       total: newTotal,
@@ -190,14 +198,15 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
     });
   });
 
-  // Rule 3: Total Weekly Hours (Must equal EXACTLY 30 for every section)
+  // Rule 3: Total Weekly Hours (26 for 1st Year, 30 for 2nd/3rd Year)
   VALID_SECTIONS.forEach(sec => {
+    const maxAllowed = getMaxWeeklyPeriods(sec);
     const year = sec.startsWith('1') ? 'First Year' : sec.startsWith('2') ? 'Second Year' : 'Third Year';
     const sectionSubjects = subjects.filter(s => (s.year || 'First Year') === year);
     const totalAssignedHours = sectionSubjects.reduce((sum, s) => sum + (Number(s.periods) || 0), 0);
 
-    if (totalAssignedHours > MAX_WEEKLY_PERIODS) {
-      const excess = totalAssignedHours - MAX_WEEKLY_PERIODS;
+    if (totalAssignedHours > maxAllowed) {
+      const excess = totalAssignedHours - maxAllowed;
       errors.push({
         section: sec,
         subject: 'All Section Subjects',
@@ -205,11 +214,11 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
         weeklyHours: totalAssignedHours,
         type: 'Hours Exceeded',
         assigned: totalAssignedHours,
-        allowed: MAX_WEEKLY_PERIODS,
-        error: `Assigned Hours ${totalAssignedHours} / ${MAX_WEEKLY_PERIODS}. Reduce ${excess} Hours.`
+        allowed: maxAllowed,
+        error: `Assigned Hours ${totalAssignedHours} / ${maxAllowed} for Section ${sec}. Reduce ${excess} Hours.`
       });
-    } else if (totalAssignedHours < MAX_WEEKLY_PERIODS) {
-      const deficit = MAX_WEEKLY_PERIODS - totalAssignedHours;
+    } else if (totalAssignedHours < maxAllowed) {
+      const deficit = maxAllowed - totalAssignedHours;
       errors.push({
         section: sec,
         subject: 'All Section Subjects',
@@ -217,8 +226,8 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
         weeklyHours: totalAssignedHours,
         type: 'Hours Insufficient',
         assigned: totalAssignedHours,
-        required: MAX_WEEKLY_PERIODS,
-        error: `Assigned Hours ${totalAssignedHours} / ${MAX_WEEKLY_PERIODS}. Assign ${deficit} More Hours.`
+        required: maxAllowed,
+        error: `Assigned Hours ${totalAssignedHours} / ${maxAllowed} for Section ${sec}. Assign ${deficit} More Hours.`
       });
     }
   });

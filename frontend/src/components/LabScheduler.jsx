@@ -5,10 +5,11 @@ import {
 } from 'lucide-react';
 
 export default function LabScheduler() {
-  // All state — UNCHANGED
+  // All state
   const [settings, setSettings] = useState({});
   const [subjects, setSubjects] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [labRooms, setLabRooms] = useState([]);
   const [labSlots, setLabSlots] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [activeSection, setActiveSection] = useState('1-A');
@@ -18,24 +19,25 @@ export default function LabScheduler() {
   const [editSlot, setEditSlot] = useState(null);
   const [editSubject, setEditSubject] = useState('');
   const [editStaff, setEditStaff] = useState('');
+  const [editLabRoom, setEditLabRoom] = useState('L1');
 
   useEffect(() => { loadAll(); }, []);
   useEffect(() => {
-    if (banner) { const t = setTimeout(() => setBanner(null), 4000); return () => clearTimeout(t); }
+    if (banner) { const t = setTimeout(() => setBanner(null), 5000); return () => clearTimeout(t); }
   }, [banner]);
 
-  // loadAll — UNCHANGED
+  // loadAll
   const loadAll = async () => {
     setLoading(true);
-    const [sett, subs, stf, slots, asgns] = await Promise.all([
+    const [sett, subs, stf, rms, slots, asgns] = await Promise.all([
       db.getSettings(), db.getSubjects(), db.getStaff(),
-      db.getLabSlots(), db.getAssignments()
+      db.getLabRooms(), db.getLabSlots(), db.getAssignments()
     ]);
     setSettings(sett); setSubjects(subs); setStaff(stf);
-    setLabSlots(slots); setAssignments(asgns); setLoading(false);
+    setLabRooms(rms); setLabSlots(slots); setAssignments(asgns); setLoading(false);
   };
 
-  // Helpers — UNCHANGED
+  // Helpers
   const isLabSlot = (section, day, period) =>
     labSlots.some(s => s.section === section && (s.day_order ?? s.dayOrder) == day && s.period == period);
 
@@ -46,6 +48,9 @@ export default function LabScheduler() {
     const existing = getSlotData(section, day, period);
     setEditSlot({ section, dayOrder: day, period });
     setEditSubject(existing?.subject_id || existing?.subjectId || '');
+    const defaultRoom = existing?.lab_room_id || existing?.labRoomId || (section.endsWith('B') ? 'L2' : 'L1');
+    setEditLabRoom(defaultRoom);
+
     const subId = existing?.subject_id || existing?.subjectId;
     if (subId) {
       const asgn = assignments.find(a => a.section === section && a.subjectId === subId);
@@ -61,28 +66,33 @@ export default function LabScheduler() {
     }
   };
 
-  // saveSlot — UNCHANGED
+  // saveSlot
   const saveSlot = async () => {
     if (!editSlot) return;
     const err = getValidationWarning();
     if (err) { setBanner({ type: 'error', msg: err }); return; }
-    await db.setLabSlot({
-      section: editSlot.section, dayOrder: editSlot.dayOrder,
-      period: editSlot.period, subjectId: editSubject || null, staffId: editStaff || null
-    });
-    setBanner({ type: 'success', msg: `Lab slot saved: ${editSlot.section} Day ${editSlot.dayOrder} Period ${editSlot.period}` });
-    setEditSlot(null);
-    await loadAll();
+    try {
+      await db.setLabSlot({
+        section: editSlot.section, dayOrder: editSlot.dayOrder,
+        period: editSlot.period, subjectId: editSubject || null,
+        staffId: editStaff || null, labRoomId: editLabRoom
+      });
+      setBanner({ type: 'success', msg: `Lab slot saved: ${editSlot.section} Day ${editSlot.dayOrder} Period ${editSlot.period}` });
+      setEditSlot(null);
+      await loadAll();
+    } catch (e) {
+      setBanner({ type: 'error', msg: e.message || 'Error saving lab slot.' });
+    }
   };
 
-  // removeSlot — UNCHANGED
+  // removeSlot
   const removeSlot = async (section, dayOrder, period) => {
     await db.removeLabSlot({ section, dayOrder, period });
     setBanner({ type: 'success', msg: 'Lab slot removed.' });
     await loadAll();
   };
 
-  // getValidationWarning — UNCHANGED (full original logic)
+  // getValidationWarning
   const getValidationWarning = () => {
     if (!editSlot || !editSubject) return null;
     if (editStaff) {
@@ -134,19 +144,22 @@ export default function LabScheduler() {
       }
     }
 
-    // 4. Check if the same laboratory room is booked by another section during the exact same day & period
-    const subObj = subjects.find(s => s.id === editSubject);
-    const isPractical = subObj?.type === 'practical' || editSubject.includes('LAB') || subObj?.name?.toLowerCase().includes('lab');
-    if (isPractical) {
-      const labRoomConflict = labSlots.find(s =>
-        (s.subject_id === editSubject || s.subjectId === editSubject) &&
+    // 4. Check Lab Room Occupancy Conflict
+    const targetRoom = editLabRoom || (editSlot.section.endsWith('B') ? 'L2' : 'L1');
+    const roomObj = labRooms.find(r => r.id === targetRoom);
+    const roomName = roomObj ? roomObj.name : targetRoom;
+    const displayRoom = (targetRoom === 'L1' || roomName === 'Lab A') ? 'Lab Room L1' : (targetRoom === 'L2' || roomName === 'Lab B') ? 'Lab Room L2' : `Lab Room ${roomName}`;
+
+    const labRoomConflict = labSlots.find(s => {
+      const sRoom = s.lab_room_id || s.labRoomId || (s.section.endsWith('B') ? 'L2' : 'L1');
+      return sRoom === targetRoom &&
         (s.day_order ?? s.dayOrder) == editSlot.dayOrder &&
         s.period == editSlot.period &&
-        s.section !== editSlot.section
-      );
-      if (labRoomConflict) {
-        return `Laboratory Conflict: The lab room for '${subObj?.name || editSubject}' is already occupied by Section ${labRoomConflict.section} at Day ${editSlot.dayOrder}, Period ${editSlot.period}.`;
-      }
+        s.section !== editSlot.section;
+    });
+
+    if (labRoomConflict) {
+      return `Lab Room Conflict: ${displayRoom} is already occupied by Section ${labRoomConflict.section} on Day ${editSlot.dayOrder} Period ${editSlot.period}. Please choose another available lab room.`;
     }
 
     // 5. Check if period exceeds available periods per day
@@ -288,20 +301,24 @@ export default function LabScheduler() {
                     const slotData = isLab ? getSlotData(activeSection, day, p) : null;
                     const slotSubjectId = slotData?.subject_id || slotData?.subjectId;
                     const slotStaffId   = slotData?.staff_id   || slotData?.staffId;
+                    const slotRoomId    = slotData?.lab_room_id || slotData?.labRoomId || slotData?.lab_room_name || (activeSection.endsWith('B') ? 'L2' : 'L1');
                     const subj = subjects.find(s => s.id === slotSubjectId);
                     const stf  = staff.find(s => s.id === slotStaffId);
+                    const roomObj = labRooms.find(r => r.id === slotRoomId);
+                    const roomDisplayName = slotData?.lab_room_name || (roomObj ? roomObj.name : (slotRoomId === 'L1' ? 'Lab A' : slotRoomId === 'L2' ? 'Lab B' : slotRoomId));
 
                     return (
                       <div
                         key={dIdx}
                         className={`lab-grid-cell ${isLab ? 'is-lab' : ''}`}
                         onClick={() => openEdit(activeSection, day, p)}
-                        title={isLab ? `${subj?.name || 'Lab'} — click to edit` : `Click to mark as lab slot (Day ${day}, P${p})`}
+                        title={isLab ? `${subj?.name || 'Lab'} (${roomDisplayName}) — click to edit` : `Click to mark as lab slot (Day ${day}, P${p})`}
                       >
                         {isLab && slotSubjectId ? (
                           <>
-                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--indigo-light)', fontFamily: 'JetBrains Mono, monospace' }}>
-                              {slotSubjectId}
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--indigo-light)', fontFamily: 'JetBrains Mono, monospace', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span>{slotSubjectId}</span>
+                              <span className="badge badge-indigo" style={{ fontSize: '0.55rem', padding: '1px 4px' }}>{roomDisplayName}</span>
                             </div>
                             {subj && (
                               <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.3, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -353,6 +370,10 @@ export default function LabScheduler() {
               const subId = s.subject_id || s.subjectId;
               const sub = subjects.find(sub => sub.id === subId);
               const day = s.day_order ?? s.dayOrder;
+              const roomId = s.lab_room_id || s.labRoomId || (s.section.endsWith('B') ? 'L2' : 'L1');
+              const roomObj = labRooms.find(r => r.id === roomId);
+              const rName = s.lab_room_name || (roomObj ? roomObj.name : (roomId === 'L1' ? 'Lab A' : roomId === 'L2' ? 'Lab B' : roomId));
+
               return (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
@@ -363,6 +384,9 @@ export default function LabScheduler() {
                     D{day} P{s.period}
                   </span>
                   {sub && <span style={{ fontSize: '0.78rem', color: 'var(--indigo-light)', fontWeight: 600 }}>{sub.name}</span>}
+                  <span className="badge" style={{ fontSize: '0.6rem', background: 'var(--blue-bg)', color: 'var(--blue-light)' }}>
+                    {rName}
+                  </span>
                   <button
                     className="btn btn-danger btn-icon"
                     style={{ width: 22, height: 22, padding: '3px', borderRadius: 'var(--r-sm)' }}
@@ -425,6 +449,27 @@ export default function LabScheduler() {
                 {staff.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
+              </select>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Lab Room</label>
+              <select
+                className="input-field"
+                value={editLabRoom}
+                onChange={e => setEditLabRoom(e.target.value)}
+              >
+                {labRooms.length > 0 ? (
+                  labRooms.map(r => (
+                    <option key={r.id} value={r.id}>{r.id} — {r.name}</option>
+                  ))
+                ) : (
+                  <>
+                    <option value="L1">L1 — Lab A</option>
+                    <option value="L2">L2 — Lab B</option>
+                    <option value="L3">L3 — Lab C</option>
+                  </>
+                )}
               </select>
             </div>
 

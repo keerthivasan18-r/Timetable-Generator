@@ -71,6 +71,50 @@ function initDb() {
         console.warn('⚠️ SQLite schema file not found, skipping initial auto-seed.');
       }
     }
+
+    // Auto-migration for lab_rooms & lab_slots.lab_room_id column
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS lab_rooms (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          department TEXT DEFAULT 'Computer Science',
+          capacity INTEGER DEFAULT 30,
+          enabled INTEGER DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT OR IGNORE INTO lab_rooms (id, name, department, capacity, enabled) VALUES
+        ('L1', 'Lab A', 'Computer Science', 30, 1),
+        ('L2', 'Lab B', 'Computer Science', 30, 1),
+        ('L3', 'Lab C', 'Computer Science', 30, 1);
+      `);
+
+      const colInfo = db.prepare("PRAGMA table_info(lab_slots)").all();
+      const hasLabRoomId = colInfo.some(c => c.name === 'lab_room_id');
+      if (!hasLabRoomId) {
+        db.exec("ALTER TABLE lab_slots ADD COLUMN lab_room_id TEXT;");
+      }
+      const hasIsManual = colInfo.some(c => c.name === 'is_manual');
+      if (!hasIsManual) {
+        db.exec("ALTER TABLE lab_slots ADD COLUMN is_manual INTEGER DEFAULT 1;");
+      }
+      const hasIsLocked = colInfo.some(c => c.name === 'is_locked');
+      if (!hasIsLocked) {
+        db.exec("ALTER TABLE lab_slots ADD COLUMN is_locked INTEGER DEFAULT 1;");
+      }
+
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS elective_sections (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          elective_id TEXT NOT NULL,
+          section TEXT NOT NULL,
+          FOREIGN KEY (elective_id) REFERENCES electives(id) ON DELETE CASCADE,
+          UNIQUE(elective_id, section)
+        );
+      `);
+    } catch (e) {
+      console.warn('⚠️ Migration warning for lab_rooms/elective_sections:', e.message);
+    }
   } catch (err) {
     console.error('❌ Error initializing SQLite database:', err.message);
   }
