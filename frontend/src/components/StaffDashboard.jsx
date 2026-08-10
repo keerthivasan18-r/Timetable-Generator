@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/db';
+import { SpotlightCard } from './ChronoComponents';
 import {
   Calendar, Bell, Clock, RefreshCw, BookOpen, User,
   CheckCircle, AlertTriangle, Layers, GraduationCap, Mail
@@ -160,12 +161,12 @@ export default function StaffDashboard({ user }) {
               sub: hasPublished ? 'Schedule is live' : 'Awaiting HOD publish'
             },
           ].map((card, i) => (
-            <div key={i} className={`stat-card ${card.color}`}>
+            <SpotlightCard key={i} className={`stat-card ${card.color} chrono-glass-card`}>
               <div className="stat-card-icon">{card.icon}</div>
               <div className="stat-card-value">{card.value}</div>
               <div className="stat-card-label">{card.label}</div>
               <div className="stat-card-sub">{card.sub}</div>
-            </div>
+            </SpotlightCard>
           ))}
         </div>
       </div>
@@ -207,7 +208,7 @@ export default function StaffDashboard({ user }) {
         <div className="glass-panel fade-in">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid var(--glass-border)' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.975rem' }}>
-              <Calendar size={16} style={{ color: 'var(--blue-light)' }} />
+              <Calendar size={16} style={{ color: 'var(--accent)' }} />
               Personal Teaching Schedule
             </h3>
             {hasPublished && (

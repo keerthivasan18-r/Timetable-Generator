@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db } from './services/db';
 import HODDashboard from './components/HODDashboard';
 import StaffDashboard from './components/StaffDashboard';
+import ChronoCanvasBackground from './components/ChronoCanvasBackground';
+import CommandPalette from './components/CommandPalette';
+import SpotlightSearchBar from './components/SpotlightSearchBar';
+import ChronoOSLogin from './components/ChronoOSLogin';
+import { ToastContainer } from './components/ToastContainer';
+import { FloatingActionButton } from './components/ChronoComponents';
 import './App.css';
 import {
   Calendar, LogOut, Users, BookOpen, Mail, Bell,
   Shield, Sun, Moon, FlaskConical, UserCheck, BarChart3,
   GraduationCap, Lock, Eye, EyeOff, ArrowRight, Clock,
-  ChevronRight, Cpu, RefreshCw, Menu, Layers
+  ChevronRight, Cpu, RefreshCw, Menu, Layers, Search, Command, Zap
 } from 'lucide-react';
 import { SidebarProvider, useSidebar } from './components/SidebarContext';
 import { ResponsiveSidebar, FloatingMenuButton } from './components/ResponsiveSidebar';
@@ -24,26 +31,26 @@ function applyTheme(theme) {
 
 // ─── Nav color map ────────────────────────────────────────────────────────────
 const NAV_COLORS = {
-  dashboard:      'blue',
-  'staff-list':   'purple',
-  'subjects-list':'emerald',
-  'lab-scheduler':'indigo',
-  electives:      'purple',
-  'active-users': 'green',
-  'email-logs':   'cyan',
-  notifications:  'orange',
+  dashboard:      'red',
+  'staff-list':   'red',
+  'subjects-list':'red',
+  'lab-scheduler':'red',
+  electives:      'red',
+  'active-users': 'red',
+  'email-logs':   'red',
+  notifications:  'red',
 };
 
 // ─── Page title map ───────────────────────────────────────────────────────────
 const PAGE_TITLES = {
-  dashboard:      'Dashboard',
-  'staff-list':   'Staff Records',
-  'subjects-list':'Courses & Assign',
-  'lab-scheduler':'Manual Scheduler',
-  electives:      'Elective Subjects',
-  'active-users': 'Active Users',
-  'email-logs':   'Email Logs',
-  notifications:  'Notifications',
+  dashboard:      'Dashboard Overview',
+  'staff-list':   'Faculty Records',
+  'subjects-list':'Courses & Assignments',
+  'lab-scheduler':'Manual Lab Scheduler',
+  electives:      'Elective Subject Modules',
+  'active-users': 'Active System Sessions',
+  'email-logs':   'Email Communications Log',
+  notifications:  'System Notifications',
 };
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
@@ -61,6 +68,10 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [notifications, setNotifications] = useState([]);
   const [lastSynced, setLastSynced] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  // Command Palette & Search State
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
 
   // Login states
   const [loginRole, setLoginRole] = useState('hod');
@@ -72,25 +83,69 @@ function AppContent() {
   const [showDemoAccounts, setShowDemoAccounts] = useState(false);
   const { isDesktop, isTablet, isMobile, tabletExpanded, toggleSidebar, sidebarOpen } = useSidebar();
 
+  // Data lists for command palette search
+  const [staffList, setStaffList] = useState([]);
+  const [subjectsList, setSubjectsList] = useState([]);
+
   useEffect(() => { applyTheme(theme); }, [theme]);
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
+  // Toast Helper
+  const addToast = useCallback((toast) => {
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev, { id, ...toast }]);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   const loadNotifications = useCallback(async () => {
     if (!user) return;
-    const list = await db.getNotifications();
-    if (user.role === 'hod') setNotifications(list);
-    else setNotifications(list.filter(n => n.recipient_id === 'all' || n.recipient_id === user.id));
-    setLastSynced(new Date());
+    try {
+      const list = await db.getNotifications();
+      if (user.role === 'hod') setNotifications(list);
+      else setNotifications(list.filter(n => n.recipient_id === 'all' || n.recipient_id === user.id));
+      setLastSynced(new Date());
+
+      // Preload search data for command palette
+      if (user.role === 'hod') {
+        const [st, sj] = await Promise.all([db.getStaff(), db.getSubjects()]);
+        setStaffList(st || []);
+        setSubjectsList(sj || []);
+      }
+    } catch (err) {
+      console.error('Error loading notifications:', err);
+    }
   }, [user]);
 
   useEffect(() => { if (user) loadNotifications(); }, [user, loadNotifications]);
+
+  // Global Keyboard Shortcuts (Ctrl+K, Ctrl+B, Ctrl+D)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandOpen(prev => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        toggleTheme();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
-    if (!loginId || !loginPwd) { setLoginError('Please enter your credentials.'); return; }
+    if (!loginId || !loginPwd) {
+      setLoginError('Please enter your login credentials.');
+      addToast({ type: 'warning', title: 'Login Failed', message: 'Credentials cannot be empty.' });
+      return;
+    }
     setLoginLoading(true);
     const res = await db.login(loginRole, loginId, loginPwd);
     setLoginLoading(false);
@@ -99,8 +154,10 @@ function AppContent() {
       setActiveTab('dashboard');
       setLoginId('');
       setLoginPwd('');
+      addToast({ type: 'success', title: 'Welcome Back', message: `Signed in successfully as ${res.user.name}` });
     } else {
       setLoginError(res.error);
+      addToast({ type: 'error', title: 'Authentication Error', message: res.error });
     }
   };
 
@@ -108,6 +165,7 @@ function AppContent() {
     await db.logout();
     setUser(null);
     setNotifications([]);
+    addToast({ type: 'info', title: 'Signed Out', message: 'You have been safely signed out.' });
   };
 
   const fillDemo = (role, id, pwd) => {
@@ -147,235 +205,56 @@ function AppContent() {
   };
 
   // ════════════════════════════════════════════════════════════════════════════
-  // LOGIN PAGE
+  // LOGIN PAGE — Chrono Glass OS Redesign
+  // ════════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  // LOGIN PAGE — Chrono OS VisionOS Centered Redesign
   // ════════════════════════════════════════════════════════════════════════════
   if (!user) {
     return (
-      <div className="auth-wrapper">
-        {/* Left — Hero Branding Panel */}
-        <div className="auth-left">
-          {/* Decorative orbs */}
-          <div className="auth-orb auth-orb-1" />
-          <div className="auth-orb auth-orb-2" />
-          <div className="auth-orb auth-orb-3" />
+      <div className="auth-wrapper chrono-auth-screen">
+        <ChronoCanvasBackground theme={theme} />
+        <ToastContainer toasts={toasts} onDismiss={removeToast} />
+        <CommandPalette
+          isOpen={isCommandOpen}
+          onClose={() => setIsCommandOpen(false)}
+          onNavigate={navigate}
+          onToggleTheme={toggleTheme}
+          theme={theme}
+          staffList={staffList}
+          subjectsList={subjectsList}
+        />
 
-          {/* Header */}
-          <div className="auth-left-header fade-in">
-            <div className="auth-left-logo-icon">
-              <GraduationCap size={22} />
-            </div>
-            <div>
-              <div className="auth-left-logo-title">ChronoAI</div>
-              <div className="auth-left-logo-subtitle">Timetable Intelligence Platform</div>
-            </div>
-          </div>
-
-          {/* Center Content */}
-          <div className="auth-left-mid fade-in">
-            <h1 className="auth-left-title">
-              Welcome back.<br />
-              Let's build smarter <span className="highlight">schedules</span>.
-            </h1>
-            <p className="auth-left-desc">
-              AI-powered timetable management for modern colleges. Automate scheduling, eliminate conflicts, and empower every faculty member.
-            </p>
-            <div className="auth-left-divider" />
-          </div>
-
-          {/* Feature Grid */}
-          <div className="auth-left-features fade-in">
-            {[
-              { icon: <Shield size={15} />, label: 'Secure Access', desc: 'Role-based auth with session tracking' },
-              { icon: <Cpu size={15} />, label: 'AI Scheduler', desc: 'Conflict-free auto-generation' },
-              { icon: <Users size={15} />, label: 'Staff Management', desc: 'Full faculty & course lifecycle' },
-            ].map((f, i) => (
-              <div key={i} className="auth-feature-item">
-                <div className="auth-feature-icon">{f.icon}</div>
-                <div className="auth-feature-label">{f.label}</div>
-                <div className="auth-feature-desc">{f.desc}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="auth-left-footer">
-            © 2025 ChronoAI · AI-Powered College Scheduling
-          </div>
-        </div>
-
-        {/* Right — Login Form Panel */}
-        <div className="auth-right">
-          {/* Theme toggle */}
-          <button onClick={toggleTheme} className="auth-theme-toggle" aria-label="Toggle theme">
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-
-          <div className="auth-form-box fade-in">
-            <h2 className="auth-right-title">Sign in to ChronoAI</h2>
-            <p className="auth-right-subtitle">Choose your role and enter your credentials</p>
-
-            {/* Role Cards */}
-            <div className="role-cards-container">
-              {[
-                { role: 'hod', icon: <Shield size={18} />, name: 'HOD Login', desc: 'Head of Department' },
-                { role: 'staff', icon: <Users size={18} />, name: 'Staff Login', desc: 'Faculty Member' },
-              ].map(r => (
-                <div
-                  key={r.role}
-                  className={`role-login-card ${loginRole === r.role ? 'active' : ''}`}
-                  onClick={() => { setLoginRole(r.role); setLoginId(''); setLoginPwd(''); setLoginError(''); }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => e.key === 'Enter' && setLoginRole(r.role)}
-                >
-                  <div className="role-card-icon-wrapper">{r.icon}</div>
-                  <div className="role-card-info">
-                    <span className="role-card-name">{r.name}</span>
-                    <span className="role-card-desc">{r.desc}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Lock separator */}
-            <div className="lock-separator-line">
-              <div className="lock-separator-icon"><Lock size={13} /></div>
-            </div>
-
-            {/* Error */}
-            {loginError && (
-              <div className="banner error" style={{ marginBottom: '16px' }}>
-                <span>⚠ {loginError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin}>
-              <div className="input-group">
-                <label className="input-label">
-                  {loginRole === 'hod' ? 'HOD Email Address' : 'Staff ID or Email'}
-                </label>
-                <div className="login-input-wrapper">
-                  <div className="login-field-prefix-icon">
-                    <Mail size={16} />
-                  </div>
-                  <input
-                    id="login-id"
-                    type="text"
-                    className="input-field"
-                    placeholder={loginRole === 'hod' ? 'hod@college.edu' : 'STF001 or email'}
-                    value={loginId}
-                    onChange={e => setLoginId(e.target.value)}
-                    autoComplete="username"
-                  />
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label className="input-label">Password</label>
-                <div className="login-input-wrapper">
-                  <div className="login-field-prefix-icon">
-                    <Lock size={16} />
-                  </div>
-                  <input
-                    id="login-pwd"
-                    type={showPwd ? 'text' : 'password'}
-                    className="input-field"
-                    placeholder="Enter your password"
-                    value={loginPwd}
-                    onChange={e => setLoginPwd(e.target.value)}
-                    autoComplete="current-password"
-                    style={{ paddingRight: '44px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPwd(v => !v)}
-                    style={{
-                      position: 'absolute', right: '12px', top: '50%',
-                      transform: 'translateY(-50%)', background: 'none',
-                      border: 'none', cursor: 'pointer',
-                      color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                      transition: 'color var(--t-fast)'
-                    }}
-                    aria-label={showPwd ? 'Hide password' : 'Show password'}
-                  >
-                    {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="remember-forgot-row">
-                <label className="checkbox-label">
-                  <input type="checkbox" id="remember-me" />
-                  <span>Remember me</span>
-                </label>
-                <a
-                  href="#forgot"
-                  className="forgot-link"
-                  onClick={e => { e.preventDefault(); alert('Contact the administrative HOD office to reset passwords.'); }}
-                >
-                  Forgot password?
-                </a>
-              </div>
-
-              <button
-                id="login-submit"
-                type="submit"
-                className="login-btn-primary"
-                disabled={loginLoading}
-              >
-                {loginLoading ? (
-                  <>
-                    <RefreshCw size={16} style={{ animation: 'spin 0.8s linear infinite' }} />
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign in as {loginRole === 'hod' ? 'HOD' : 'Staff'}</span>
-                    <ArrowRight size={16} />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="or-divider"><span>or</span></div>
-
-            <div className="contact-admin-text">
-              No account?{' '}
-              <a href="#contact" onClick={e => { e.preventDefault(); alert('Visit the administrative block or email admin@college.edu'); }}>
-                Contact administrator
-              </a>
-            </div>
-
-            {/* Demo accounts */}
-            <div style={{ marginTop: '20px', borderTop: '1px dashed var(--glass-border)', paddingTop: '16px' }}>
-              <button
-                type="button"
-                onClick={() => setShowDemoAccounts(v => !v)}
-                className="demo-accounts-trigger"
-              >
-                🔑 {showDemoAccounts ? 'Hide' : 'Show'} demo accounts
-              </button>
-
-              {showDemoAccounts && (
-                <div className="fade-in" style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {[
-                    { role: 'hod',   id: 'hod@college.edu', pwd: 'Admin123',      label: '🛡 HOD Admin',          sub: 'Full system access' },
-                  ].map((acct, i) => (
-                    <button key={i} onClick={() => fillDemo(acct.role, acct.id, acct.pwd)} className="demo-account-btn">
-                      <span className="demo-account-btn-name">{acct.label}</span>
-                      <span className="demo-account-btn-sub">{acct.sub} — click to fill</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <ChronoOSLogin
+          theme={theme}
+          toggleTheme={toggleTheme}
+          onLogin={async (role, id, pwd) => {
+            setLoginError('');
+            setLoginLoading(true);
+            const res = await db.login(role, id, pwd);
+            setLoginLoading(false);
+            if (res.success) {
+              setUser(res.user);
+              setActiveTab('dashboard');
+              addToast({ type: 'success', title: 'Welcome Back', message: `Signed in as ${res.user.name}` });
+              return true;
+            } else {
+              setLoginError(res.error);
+              addToast({ type: 'error', title: 'Authentication Error', message: res.error });
+              return false;
+            }
+          }}
+          loginLoading={loginLoading}
+          loginError={loginError}
+          fillDemo={fillDemo}
+          onOpenCommandPalette={() => setIsCommandOpen(true)}
+        />
       </div>
     );
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // MAIN APP — Authenticated
+  // MAIN APP — Authenticated Chrono Glass OS
   // ════════════════════════════════════════════════════════════════════════════
   const currentPageTitle = PAGE_TITLES[activeTab] || 'Dashboard';
 
@@ -390,7 +269,20 @@ function AppContent() {
   }
 
   return (
-    <div className={`app-container ${layoutClass}`}>
+    <div className={`app-container chrono-glass-app ${layoutClass}`}>
+      <ChronoCanvasBackground theme={theme} />
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
+
+      <CommandPalette
+        isOpen={isCommandOpen}
+        onClose={() => setIsCommandOpen(false)}
+        onNavigate={navigate}
+        onToggleTheme={toggleTheme}
+        theme={theme}
+        staffList={staffList}
+        subjectsList={subjectsList}
+      />
+
       <FloatingMenuButton />
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
@@ -407,12 +299,12 @@ function AppContent() {
         getInitials={getInitials}
       />
 
-      {/* ── Right column: topbar + main ──────────────────────────────────── */}
+      {/* ── Right column: topbar + main content ─────────────────────────── */}
       <div className="content-area">
 
         {/* ── Topbar ─────────────────────────────────────────────────────── */}
-        <header className="topbar" role="banner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <header className="topbar chrono-glass-topbar" role="banner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {!isDesktop && (
               <button
                 className="topbar-icon-btn topbar-menu-btn"
@@ -423,41 +315,79 @@ function AppContent() {
                 <Menu size={18} />
               </button>
             )}
+
+            {/* Animated Breadcrumb */}
             <div className="topbar-breadcrumb">
               <span className="topbar-brand-name">ChronoAI</span>
               <ChevronRight size={13} className="topbar-breadcrumb-sep" />
-              <span className="topbar-breadcrumb-active">{currentPageTitle}</span>
+              <motion.span
+                key={activeTab}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+                className="topbar-breadcrumb-active"
+              >
+                {currentPageTitle}
+              </motion.span>
             </div>
+          </div>
+
+          {/* Embedded Spotlight Search Bar Trigger */}
+          <div className="topbar-spotlight-wrapper">
+            <SpotlightSearchBar
+              isOpen={false}
+              embedded={true}
+              onFocusTrigger={() => setIsCommandOpen(true)}
+              theme={theme}
+            />
           </div>
 
           <div className="topbar-actions">
             {lastSynced && (
               <span className="topbar-synced">
-                <RefreshCw size={11} />
+                <RefreshCw size={11} className="synced-icon" />
                 {formatLastSynced(lastSynced)}
               </span>
             )}
 
-            <button
-              className="topbar-icon-btn"
+            {/* Theme Morph Switch */}
+            <motion.button
+              className="topbar-icon-btn chrono-glass-btn"
               onClick={toggleTheme}
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode (Ctrl+D)`}
             >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={theme}
+                  initial={{ opacity: 0, rotate: -30, scale: 0.8 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: 30, scale: 0.8 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                </motion.div>
+              </AnimatePresence>
+            </motion.button>
 
-            <button
-              className="topbar-icon-btn"
+            {/* Notification Bell */}
+            <motion.button
+              className="topbar-icon-btn chrono-glass-btn"
               onClick={() => navigate('notifications')}
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
             >
               <Bell size={16} />
               {unreadCount > 0 && <span className="topbar-notif-dot" aria-hidden="true" />}
-            </button>
+            </motion.button>
 
+            {/* User Profile Avatar */}
             <div
-              className="user-avatar"
-              style={{ width: 32, height: 32, fontSize: '0.6875rem', cursor: 'default', flexShrink: 0 }}
+              className="user-avatar chrono-user-avatar"
+              style={{ width: 34, height: 34, fontSize: '0.75rem', flexShrink: 0 }}
               title={user.name}
               aria-label={`Signed in as ${user.name}`}
             >
@@ -466,67 +396,81 @@ function AppContent() {
           </div>
         </header>
 
-        {/* ── Main Content ───────────────────────────────────────────────── */}
-        <main className="main-content fade-in" role="main">
-
-          {/* Notifications */}
-          {activeTab === 'notifications' && (
-            <div className="fade-in">
-              <div className="page-header">
-                <div>
-                  <h1>Notifications</h1>
-                  <p>System alerts and department announcements</p>
-                </div>
-                {unreadCount > 0 && (
-                  <span className="badge badge-orange">{unreadCount} unread</span>
-                )}
-              </div>
-
-              <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
-                {notifications.length === 0 ? (
-                  <div className="empty-state">
-                    <Bell size={52} className="empty-state-icon" />
-                    <h3>No notifications yet</h3>
-                    <p>System alerts and timetable updates will appear here once the HOD publishes a schedule.</p>
+        {/* ── Main Content with Framer Motion Page Transition ────────────── */}
+        <AnimatePresence mode="wait">
+          <motion.main
+            key={activeTab}
+            className="main-content chrono-main-content"
+            initial={{ opacity: 0, y: 8, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.995 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            role="main"
+          >
+            {/* Notifications Panel */}
+            {activeTab === 'notifications' && (
+              <div className="fade-in">
+                <div className="page-header">
+                  <div>
+                    <h1 className="page-title-heading">Notifications & Announcements</h1>
+                    <p className="page-subtitle-text">System alerts, automated scheduling updates, and college notices</p>
                   </div>
-                ) : (
-                  notifications.map(n => (
-                    <div key={n.id} className={`notification-item ${!n.is_read ? 'unread' : ''}`}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="notification-title">{n.title}</div>
-                          <div className="notification-msg">{n.message}</div>
-                          <div className="notification-time">
-                            {new Date(n.created_at || n.date).toLocaleString()}
-                          </div>
-                        </div>
-                        {!n.is_read && (
-                          <span className="badge badge-orange" style={{ flexShrink: 0 }}>New</span>
-                        )}
-                      </div>
+                  {unreadCount > 0 && (
+                    <span className="badge badge-orange">{unreadCount} unread</span>
+                  )}
+                </div>
+
+                <div className="glass-panel chrono-glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                  {notifications.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-state-glass-icon"><Bell size={36} /></div>
+                      <h3>All caught up</h3>
+                      <p>System alerts and timetable updates will appear here once the HOD publishes a schedule.</p>
                     </div>
-                  ))
-                )}
+                  ) : (
+                    notifications.map(n => (
+                      <div key={n.id} className={`notification-item ${!n.is_read ? 'unread' : ''}`}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="notification-title">{n.title}</div>
+                            <div className="notification-msg">{n.message}</div>
+                            <div className="notification-time">
+                              {new Date(n.created_at || n.date).toLocaleString()}
+                            </div>
+                          </div>
+                          {!n.is_read && (
+                            <span className="badge badge-orange" style={{ flexShrink: 0 }}>New</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* HOD Dashboard panels */}
-          {user.role === 'hod' && activeTab !== 'notifications' && (
-            <HODDashboard
-              activePanel={activeTab}
-              triggerNotificationReload={loadNotifications}
-              onNavigateToCourses={() => setActiveTab('subjects-list')}
-            />
-          )}
+            {/* HOD Dashboard panels */}
+            {user.role === 'hod' && activeTab !== 'notifications' && (
+              <HODDashboard
+                activePanel={activeTab}
+                triggerNotificationReload={loadNotifications}
+                onNavigateToCourses={() => setActiveTab('subjects-list')}
+                addToast={addToast}
+              />
+            )}
 
-          {/* Staff Dashboard */}
-          {user.role === 'staff' && activeTab === 'dashboard' && (
-            <StaffDashboard user={user} />
-          )}
-
-        </main>
+            {/* Staff Dashboard */}
+            {user.role === 'staff' && activeTab === 'dashboard' && (
+              <StaffDashboard user={user} addToast={addToast} />
+            )}
+          </motion.main>
+        </AnimatePresence>
       </div>
+
+      {/* Floating Action Button for Mobile/Tablet */}
+      <FloatingActionButton
+        onOpenCommand={() => setIsCommandOpen(true)}
+      />
     </div>
   );
 }

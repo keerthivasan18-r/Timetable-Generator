@@ -34,23 +34,125 @@ const DEFAULT_SETTINGS = {
   }
 };
 
-const DEFAULT_STAFF = [];
-const DEFAULT_SUBJECTS = [];
-const DEFAULT_ASSIGNMENTS = [];
+const DEFAULT_STAFF = [
+  { id: 'STF001', name: 'Murugan', email: 'murugan@college.edu', password: 'Password123' },
+  { id: 'STF002', name: 'Vadivelmurugan', email: 'vadivelmurugan@college.edu', password: 'Password123' },
+  { id: 'STF003', name: 'Vijaya', email: 'vijaya@college.edu', password: 'Password123' },
+  { id: 'STF004', name: 'Raja', email: 'raja@college.edu', password: 'Password123' },
+  { id: 'STF005', name: 'Archana', email: 'archana@college.edu', password: 'Password123' },
+  { id: 'STF006', name: 'Vidhya', email: 'vidhya@college.edu', password: 'Password123' },
+  { id: 'STF007', name: 'Tamilarasi', email: 'tamilarasi@college.edu', password: 'Password123' },
+  { id: 'STF008', name: 'Srilakshmi', email: 'srilakshmi@college.edu', password: 'Password123' },
+  { id: 'STF009', name: 'Rajam', email: 'rajam@college.edu', password: 'Password123' },
+  { id: 'STF010', name: 'Kavitha', email: 'kavitha@college.edu', password: 'Password123' },
+  { id: 'STF011', name: 'Indhu', email: 'indhu@college.edu', password: 'Password123' },
+  { id: 'STF012', name: 'Sangeetha', email: 'sangeetha@college.edu', password: 'Password123' },
+  { id: 'STF013', name: 'Sudha', email: 'sudha@college.edu', password: 'Password123' },
+  { id: 'STF014', name: 'Ponnila', email: 'ponnila@college.edu', password: 'Password123' },
+  { id: 'STF015', name: 'Poojitha', email: 'poojitha@college.edu', password: 'Password123' },
+  { id: 'STF016', name: 'Saranya', email: 'saranya@college.edu', password: 'Password123' },
+  { id: 'STF017', name: 'Lalitha', email: 'lalitha@college.edu', password: 'Password123' },
+  { id: 'STF018', name: 'Dharani', email: 'dharani@college.edu', password: 'Password123' },
+  { id: 'STF019', name: 'PJR', email: 'pjr@college.edu', password: 'Password123' },
+  { id: 'STF020', name: 'Karthika', email: 'karthika@college.edu', password: 'Password123' },
+  { id: 'STF021', name: 'Outside Faculty', email: 'outside.faculty@college.edu', password: 'Password123' }
+];
+
+const DEFAULT_SUBJECTS = [
+  // First Year
+  { id: 'CS101', name: 'Language', type: 'theory', periods: 4, year: 'First Year' },
+  { id: 'CS102', name: 'Mathematics', type: 'theory', periods: 4, year: 'First Year' },
+  { id: 'CS103', name: 'English', type: 'theory', periods: 4, year: 'First Year' },
+  { id: 'CS104', name: 'C++', type: 'theory', periods: 4, year: 'First Year' },
+  { id: 'CS105', name: 'C++ Lab', type: 'practical', periods: 4, year: 'First Year' },
+
+  // Second Year
+  { id: 'CS201', name: 'Statistics', type: 'theory', periods: 4, year: 'Second Year' },
+  { id: 'CS202', name: 'Language', type: 'theory', periods: 4, year: 'Second Year' },
+  { id: 'CS203', name: 'AAD', type: 'theory', periods: 4, year: 'Second Year' },
+  { id: 'CS204', name: 'English', type: 'theory', periods: 4, year: 'Second Year' },
+  { id: 'CS205', name: 'Software Engineering', type: 'theory', periods: 4, year: 'Second Year' },
+  { id: 'CS206', name: 'Artificial Intelligence', type: 'theory', periods: 4, year: 'Second Year' },
+  { id: 'CS207', name: 'EVS', type: 'theory', periods: 2, year: 'Second Year' },
+  { id: 'CS208', name: 'AAD Lab', type: 'practical', periods: 4, year: 'Second Year' },
+
+  // Third Year
+  { id: 'CS301', name: 'Mini Project', type: 'practical', periods: 4, year: 'Third Year' },
+  { id: 'CS302', name: 'Cloud Computing', type: 'theory', periods: 5, year: 'Third Year' },
+  { id: 'CS303', name: 'Computer Networks', type: 'theory', periods: 5, year: 'Third Year' },
+  { id: 'CS304', name: 'PHP', type: 'theory', periods: 4, year: 'Third Year' },
+  { id: 'CS305', name: 'PHP Lab', type: 'practical', periods: 4, year: 'Third Year' },
+  { id: 'CS306', name: 'Information & Data Security', type: 'theory', periods: 4, year: 'Third Year' },
+  { id: 'CS307', name: 'Big Data', type: 'theory', periods: 4, year: 'Third Year' }
+];
+
+const DEFAULT_ASSIGNMENTS = [
+  // 1-A
+  { section: '1-A', subjectId: 'CS101', staffId: 'STF001' },
+  { section: '1-A', subjectId: 'CS102', staffId: 'STF003' },
+  { section: '1-A', subjectId: 'CS103', staffId: 'STF005' },
+  { section: '1-A', subjectId: 'CS104', staffId: 'STF007' },
+  { section: '1-A', subjectId: 'CS105', staffId: 'STF007' },
+
+  // 1-B
+  { section: '1-B', subjectId: 'CS101', staffId: 'STF002' },
+  { section: '1-B', subjectId: 'CS102', staffId: 'STF004' },
+  { section: '1-B', subjectId: 'CS103', staffId: 'STF006' },
+  { section: '1-B', subjectId: 'CS104', staffId: 'STF008' },
+  { section: '1-B', subjectId: 'CS105', staffId: 'STF008' },
+
+  // 2-A
+  { section: '2-A', subjectId: 'CS201', staffId: 'STF011' },
+  { section: '2-A', subjectId: 'CS202', staffId: 'STF001' },
+  { section: '2-A', subjectId: 'CS203', staffId: 'STF012' },
+  { section: '2-A', subjectId: 'CS204', staffId: 'STF005' },
+  { section: '2-A', subjectId: 'CS205', staffId: 'STF014' },
+  { section: '2-A', subjectId: 'CS206', staffId: 'STF015' },
+  { section: '2-A', subjectId: 'CS207', staffId: 'STF016' },
+  { section: '2-A', subjectId: 'CS208', staffId: 'STF012' },
+
+  // 2-B
+  { section: '2-B', subjectId: 'CS201', staffId: 'STF011' },
+  { section: '2-B', subjectId: 'CS202', staffId: 'STF002' },
+  { section: '2-B', subjectId: 'CS203', staffId: 'STF013' },
+  { section: '2-B', subjectId: 'CS204', staffId: 'STF006' },
+  { section: '2-B', subjectId: 'CS205', staffId: 'STF014' },
+  { section: '2-B', subjectId: 'CS206', staffId: 'STF015' },
+  { section: '2-B', subjectId: 'CS207', staffId: 'STF014' },
+  { section: '2-B', subjectId: 'CS208', staffId: 'STF013' },
+
+  // 3-A
+  { section: '3-A', subjectId: 'CS301', staffId: 'STF020/STF016' },
+  { section: '3-A', subjectId: 'CS302', staffId: 'STF017' },
+  { section: '3-A', subjectId: 'CS303', staffId: 'STF020' },
+  { section: '3-A', subjectId: 'CS304', staffId: 'STF009' },
+  { section: '3-A', subjectId: 'CS305', staffId: 'STF009' },
+  { section: '3-A', subjectId: 'CS306', staffId: 'STF016' },
+  { section: '3-A', subjectId: 'CS307', staffId: 'STF018' },
+
+  // 3-B
+  { section: '3-B', subjectId: 'CS301', staffId: 'STF010' },
+  { section: '3-B', subjectId: 'CS302', staffId: 'STF012' },
+  { section: '3-B', subjectId: 'CS303', staffId: 'STF015' },
+  { section: '3-B', subjectId: 'CS304', staffId: 'STF019' },
+  { section: '3-B', subjectId: 'CS305', staffId: 'STF019' },
+  { section: '3-B', subjectId: 'CS306', staffId: 'STF016' },
+  { section: '3-B', subjectId: 'CS307', staffId: 'STF018' }
+];
 
 // Initialise localStorage fallback defaults
 function initLocalFallback() {
   const currentStaff = LS.get('_staff');
-  if (!currentStaff || (Array.isArray(currentStaff) && currentStaff.some(s => s.id === 'STF001' || s.name === 'Sangeetha'))) {
-    LS.set('_staff', []);
+  if (!currentStaff || (Array.isArray(currentStaff) && currentStaff.length === 0)) {
+    LS.set('_staff', DEFAULT_STAFF);
   }
   const currentSubjects = LS.get('_subjects');
-  if (!currentSubjects || (Array.isArray(currentSubjects) && currentSubjects.some(s => s.id === 'CS101' || s.name === 'Java'))) {
-    LS.set('_subjects', []);
+  if (!currentSubjects || (Array.isArray(currentSubjects) && currentSubjects.length === 0)) {
+    LS.set('_subjects', DEFAULT_SUBJECTS);
   }
   const currentAssignments = LS.get('_assignments');
-  if (!currentAssignments || (Array.isArray(currentAssignments) && currentAssignments.some(a => a.staffId === 'STF001' || a.subjectId === 'CS101'))) {
-    LS.set('_assignments', []);
+  if (!currentAssignments || (Array.isArray(currentAssignments) && currentAssignments.length === 0)) {
+    LS.set('_assignments', DEFAULT_ASSIGNMENTS);
   }
   if (!LS.get('_settings')) LS.set('_settings', DEFAULT_SETTINGS);
   if (!LS.get('_timetable')) LS.set('_timetable', { status: 'draft', tables: null });
@@ -200,8 +302,14 @@ export const db = {
   // ── Staff ───────────────────────────────────────────────────────────────────
   async getStaff() {
     const res = await apiCall('GET', '/staff');
-    if (res.ok) { LS.set('_staff', res.data); return res.data; }
-    return LS.get('_staff', []);
+    if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
+      LS.set('_staff', res.data);
+      return res.data;
+    }
+    const cached = LS.get('_staff');
+    if (Array.isArray(cached) && cached.length > 0) return cached;
+    LS.set('_staff', DEFAULT_STAFF);
+    return DEFAULT_STAFF;
   },
 
   async addStaff({ name, email, password }) {
@@ -209,7 +317,7 @@ export const db = {
     if (res.ok) { await this.getStaff(); return res.data; }
     if (res.data?.error) throw new Error(res.data.error);
     // Offline fallback
-    const staffList = LS.get('_staff', []);
+    const staffList = LS.get('_staff', DEFAULT_STAFF);
     if (staffList.some(s => s.email.toLowerCase() === email.toLowerCase())) throw new Error('Email already exists.');
     if (!/[A-Z]/.test(password)) throw new Error('Password must contain at least one uppercase letter.');
     const maxNum = staffList.reduce((m, s) => Math.max(m, parseInt(s.id.replace('STF',''), 10)), 0);
@@ -223,31 +331,37 @@ export const db = {
     const res = await apiCall('PUT', `/staff/${id}`, data);
     if (res.ok) { await this.getStaff(); return; }
     if (res.data?.error) throw new Error(res.data.error);
-    const staffList = LS.get('_staff', []);
+    const staffList = LS.get('_staff', DEFAULT_STAFF);
     const idx = staffList.findIndex(s => s.id === id);
     if (idx !== -1) { staffList[idx] = { ...staffList[idx], ...data }; LS.set('_staff', staffList); }
   },
 
   async deleteStaff(id) {
     await apiCall('DELETE', `/staff/${id}`);
-    const staffList = LS.get('_staff', []).filter(s => s.id !== id);
+    const staffList = LS.get('_staff', DEFAULT_STAFF).filter(s => s.id !== id);
     LS.set('_staff', staffList);
-    const asgns = LS.get('_assignments', []).filter(a => a.staffId !== id);
+    const asgns = LS.get('_assignments', DEFAULT_ASSIGNMENTS).filter(a => a.staffId !== id);
     LS.set('_assignments', asgns);
   },
 
   // ── Subjects ────────────────────────────────────────────────────────────────
   async getSubjects() {
     const res = await apiCall('GET', '/subjects');
-    if (res.ok) { LS.set('_subjects', res.data); return res.data; }
-    return LS.get('_subjects', []);
+    if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
+      LS.set('_subjects', res.data);
+      return res.data;
+    }
+    const cached = LS.get('_subjects');
+    if (Array.isArray(cached) && cached.length > 0) return cached;
+    LS.set('_subjects', DEFAULT_SUBJECTS);
+    return DEFAULT_SUBJECTS;
   },
 
   async addSubject({ id, name, type, periods, year }) {
     const res = await apiCall('POST', '/subjects', { id, name, type, periods, year });
     if (res.ok) { await this.getSubjects(); return; }
     if (res.data?.error) throw new Error(res.data.error);
-    const subjects = LS.get('_subjects', []);
+    const subjects = LS.get('_subjects', DEFAULT_SUBJECTS);
     if (subjects.some(s => s.id.toLowerCase() === id.toLowerCase())) throw new Error('Subject Code already exists.');
     subjects.push({ id, name, type, periods: parseInt(periods), year: year || 'First Year' });
     LS.set('_subjects', subjects);
@@ -257,7 +371,7 @@ export const db = {
     const res = await apiCall('PUT', `/subjects/${id}`, { name, type, periods, year });
     if (res.ok) { await this.getSubjects(); return; }
     if (res.data?.error) throw new Error(res.data.error);
-    const subjects = LS.get('_subjects', []);
+    const subjects = LS.get('_subjects', DEFAULT_SUBJECTS);
     const idx = subjects.findIndex(s => s.id === id);
     if (idx !== -1) {
       subjects[idx] = { ...subjects[idx], name, type, periods: parseInt(periods), year: year || 'First Year' };
@@ -267,14 +381,14 @@ export const db = {
 
   async deleteSubject(id) {
     await apiCall('DELETE', `/subjects/${id}`);
-    LS.set('_subjects', LS.get('_subjects', []).filter(s => s.id !== id));
-    LS.set('_assignments', LS.get('_assignments', []).filter(a => a.subjectId !== id));
+    LS.set('_subjects', LS.get('_subjects', DEFAULT_SUBJECTS).filter(s => s.id !== id));
+    LS.set('_assignments', LS.get('_assignments', DEFAULT_ASSIGNMENTS).filter(a => a.subjectId !== id));
   },
 
   // ── Assignments ──────────────────────────────────────────────────────────────
   async getAssignments() {
     const res = await apiCall('GET', '/subjects/assignments');
-    if (res.ok) {
+    if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
       // Normalize MySQL column names (subject_id → subjectId, staff_id → staffId)
       const normalized = res.data.map(a => ({
         section: a.section,
@@ -284,7 +398,10 @@ export const db = {
       LS.set('_assignments', normalized);
       return normalized;
     }
-    return LS.get('_assignments', []);
+    const cached = LS.get('_assignments');
+    if (Array.isArray(cached) && cached.length > 0) return cached;
+    LS.set('_assignments', DEFAULT_ASSIGNMENTS);
+    return DEFAULT_ASSIGNMENTS;
   },
 
   async saveAssignments(assignments) {

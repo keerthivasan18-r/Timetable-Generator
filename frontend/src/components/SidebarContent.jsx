@@ -1,5 +1,6 @@
 import React from 'react';
-import { Calendar, LogOut, Sun, Moon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Calendar, LogOut, Sun, Moon, Sparkles } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 
 export function SidebarContent({
@@ -22,106 +23,158 @@ export function SidebarContent({
     }
   };
 
-  return (
-    <div className="sidebar-inner">
+  const coreNavItems = user?.role === 'hod' ? navItems.slice(0, 5) : navItems;
+  const systemNavItems = user?.role === 'hod' ? navItems.slice(5) : [];
 
-      {/* ── Logo ──────────────────────────────────────────────────────────── */}
+  return (
+    <div className="sidebar-inner chrono-glass-sidebar">
+
+      {/* ── Logo & Brand ─────────────────────────────────────────────────── */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon" aria-hidden="true">
-          <Calendar size={18} />
+        <div className="sidebar-logo-icon-wrapper" aria-hidden="true">
+          <Calendar size={18} className="sidebar-logo-icon" />
+          <div className="sidebar-logo-pulse" />
         </div>
         <div className="sidebar-logo-text">
-          <span className="sidebar-logo-name">ChronoAI</span>
-          <span className="sidebar-logo-sub">Timetable System</span>
+          <div className="sidebar-logo-title-row">
+            <span className="sidebar-logo-name">ChronoAI</span>
+            <span className="sidebar-logo-tag">OS</span>
+          </div>
+          <span className="sidebar-logo-sub">Timetable Intelligence</span>
         </div>
       </div>
 
-      {/* ── Navigation ────────────────────────────────────────────────────── */}
+      {/* ── Navigation Items ─────────────────────────────────────────────── */}
       <nav className="sidebar-nav" role="navigation" aria-label="Main navigation">
-
-        {user.role === 'hod' && (
-          <div className="sidebar-section-label">Core</div>
+        {user?.role === 'hod' && (
+          <div className="sidebar-section-header">
+            <span className="sidebar-section-label">Core Modules</span>
+          </div>
         )}
 
-        {navItems.slice(0, user.role === 'hod' ? 5 : navItems.length).map(item => (
-          <button
-            key={item.id}
-            id={`nav-${item.id}`}
-            className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-            onClick={() => handleNavClick(item.id)}
-            aria-current={activeTab === item.id ? 'page' : undefined}
-          >
-            <span className="nav-item-icon" aria-hidden="true">{item.icon}</span>
-            <span className="nav-item-label">{item.label}</span>
-            {item.badge != null && item.badge > 0 && (
-              <span className="nav-badge" aria-label={`${item.badge} unread`}>{item.badge}</span>
-            )}
-          </button>
-        ))}
-
-        {user.role === 'hod' && (
-          <>
-            <div className="sidebar-section-label" style={{ marginTop: '8px' }}>System</div>
-            {navItems.slice(5).map(item => (
-              <button
+        <div className="sidebar-nav-group">
+          {coreNavItems.map(item => {
+            const isActive = activeTab === item.id;
+            return (
+              <motion.button
                 key={item.id}
                 id={`nav-${item.id}`}
-                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                className={`nav-item ${isActive ? 'active' : ''}`}
                 onClick={() => handleNavClick(item.id)}
-                aria-current={activeTab === item.id ? 'page' : undefined}
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.98 }}
+                aria-current={isActive ? 'page' : undefined}
+                style={{ position: 'relative' }}
               >
-                <span className="nav-item-icon" aria-hidden="true">{item.icon}</span>
+                {isActive && (
+                  <motion.div
+                    className="nav-active-pill"
+                    layoutId="sidebar-active-pill"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="nav-item-icon" aria-hidden="true">
+                  {item.icon}
+                </span>
                 <span className="nav-item-label">{item.label}</span>
                 {item.badge != null && item.badge > 0 && (
-                  <span className="nav-badge" aria-label={`${item.badge} unread`}>{item.badge}</span>
+                  <span className="nav-badge-pill" aria-label={`${item.badge} unread`}>
+                    {item.badge}
+                  </span>
                 )}
-              </button>
-            ))}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {user?.role === 'hod' && systemNavItems.length > 0 && (
+          <>
+            <div className="sidebar-section-header" style={{ marginTop: '16px' }}>
+              <span className="sidebar-section-label">System & Logs</span>
+            </div>
+            <div className="sidebar-nav-group">
+              {systemNavItems.map(item => {
+                const isActive = activeTab === item.id;
+                return (
+                  <motion.button
+                    key={item.id}
+                    id={`nav-${item.id}`}
+                    className={`nav-item ${isActive ? 'active' : ''}`}
+                    onClick={() => handleNavClick(item.id)}
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    aria-current={isActive ? 'page' : undefined}
+                    style={{ position: 'relative' }}
+                  >
+                    {isActive && (
+                      <motion.div
+                        className="nav-active-pill"
+                        layoutId="sidebar-active-pill"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="nav-item-icon" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                    <span className="nav-item-label">{item.label}</span>
+                    {item.badge != null && item.badge > 0 && (
+                      <span className="nav-badge-pill" aria-label={`${item.badge} unread`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
           </>
         )}
       </nav>
 
-      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      {/* ── Footer & User Profile ────────────────────────────────────────── */}
       <div className="sidebar-footer">
-
-        {/* Theme toggle */}
-        <button
+        {/* Theme Switcher Button */}
+        <motion.button
           id="theme-toggle"
           onClick={toggleTheme}
-          className="nav-item"
+          className="sidebar-theme-btn"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
           aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          <span className="nav-item-icon" aria-hidden="true">
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+          <span className="theme-btn-icon">
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </span>
-          <span className="nav-item-label">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
+          <span className="theme-btn-text">
+            {theme === 'dark' ? 'Light Atmosphere' : 'Dark Space'}
+          </span>
+        </motion.button>
 
         <div className="sidebar-divider" role="separator" />
 
-        {/* User profile */}
-        <div className="user-profile-card">
-          <div className="user-avatar" aria-label={`User: ${user.name}`} title={user.name}>
-            {getInitials(user.name || 'User')}
+        {/* User Card */}
+        <div className="sidebar-user-card">
+          <div className="sidebar-user-avatar" aria-label={`User: ${user?.name}`} title={user?.name}>
+            {getInitials(user?.name || 'User')}
           </div>
-          <div className="user-info">
-            <div className="user-name">{user.name}</div>
-            <div className="user-role">
-              {user.role === 'hod' ? 'HOD Administrator' : `Staff · ${user.id}`}
+          <div className="sidebar-user-info">
+            <div className="sidebar-user-name">{user?.name}</div>
+            <div className="sidebar-user-role">
+              {user?.role === 'hod' ? 'HOD Administrator' : `Staff · ${user?.id}`}
             </div>
           </div>
-        </div>
 
-        {/* Sign out */}
-        <button
-          id="sign-out"
-          className="nav-item logout"
-          onClick={handleLogout}
-          aria-label="Sign out"
-        >
-          <span className="nav-item-icon" aria-hidden="true"><LogOut size={17} /></span>
-          <span className="nav-item-label">Sign Out</span>
-        </button>
+          <motion.button
+            id="sign-out"
+            className="sidebar-logout-btn"
+            onClick={handleLogout}
+            whileHover={{ scale: 1.1, color: 'var(--danger)' }}
+            whileTap={{ scale: 0.9 }}
+            aria-label="Sign out"
+            title="Sign out of ChronoAI"
+          >
+            <LogOut size={16} />
+          </motion.button>
+        </div>
       </div>
 
     </div>

@@ -6,6 +6,8 @@ import ActiveUsersPanel from './ActiveUsersPanel';
 import LabScheduler from './LabScheduler';
 import ValidationReportModal from './ValidationReportModal';
 import ElectivesModule from './ElectivesModule';
+import { SpotlightCard, AnimatedNumber } from './ChronoComponents';
+import confetti from 'canvas-confetti';
 import {
   Users, BookOpen, RefreshCw, CheckCircle, AlertTriangle,
   Trash, Plus, Edit, Mail, Save, Send, HelpCircle, Calendar,
@@ -288,6 +290,11 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
       setTimetable({ status: 'draft', tables: res.tables });
       setConflicts(validateTimetable(res.tables, staff, subjects, settings));
       showBanner('success', 'All validation checks passed! Conflict-free timetable generated.');
+      try {
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      } catch (err) {
+        console.log(err);
+      }
     } else { showBanner('error', res.error); }
   };
 
@@ -443,12 +450,16 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
             { label: 'Emails Sent', value: simLogs.filter(l => !l.is_broadcast).length, sub: 'Simulated direct logs', icon: <Mail size={18} style={{ color: 'var(--amber-light)' }} />, color: 'amber' },
             { label: 'Broadcast Emails', value: simLogs.filter(l => l.is_broadcast).length, sub: 'Department-wide alerts', icon: <Megaphone size={18} style={{ color: 'var(--purple-light)' }} />, color: 'purple' },
           ].map((card, i) => (
-            <div key={i} className={`stat-card ${card.color}`}>
-              <div className="stat-card-icon">{card.icon}</div>
-              <div className="stat-card-value">{card.value}</div>
+            <SpotlightCard key={i} className={`stat-card ${card.color} chrono-glass-card`}>
+              <div className="stat-card-header">
+                <div className="stat-card-icon">{card.icon}</div>
+              </div>
+              <div className="stat-card-value">
+                <AnimatedNumber value={card.value} />
+              </div>
               <div className="stat-card-label">{card.label}</div>
               {card.sub && <div className="stat-card-sub">{card.sub}</div>}
-            </div>
+            </SpotlightCard>
           ))}
         </div>
 

@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { SidebarContent } from './SidebarContent';
@@ -6,7 +7,14 @@ import { SidebarContent } from './SidebarContent';
 const LazyMobileDrawer = lazy(() => import('./MobileDrawer'));
 
 export const Backdrop = React.memo(({ onClose }) => (
-  <div className="sidebar-backdrop" onClick={onClose} aria-hidden="true" />
+  <motion.div
+    className="sidebar-backdrop"
+    onClick={onClose}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    aria-hidden="true"
+  />
 ));
 
 export const HamburgerIcon = React.memo(({ isOpen }) => (
@@ -46,7 +54,7 @@ export const CloseButton = React.memo(({ onClick }) => (
 
 export const DesktopSidebar = React.memo((props) => {
   return (
-    <aside className="sidebar desktop-sidebar slide-in-left" role="navigation" aria-label="Desktop navigation">
+    <aside className="sidebar desktop-sidebar chrono-floating-sidebar" role="navigation" aria-label="Desktop navigation">
       <SidebarContent {...props} />
     </aside>
   );
@@ -57,15 +65,11 @@ export const TabletSidebar = React.memo((props) => {
 
   return (
     <>
-      {sidebarOpen && (
-        <div
-          className="sidebar-backdrop"
-          onClick={closeSidebar}
-          aria-hidden="true"
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && <Backdrop onClose={closeSidebar} />}
+      </AnimatePresence>
       <aside
-        className={`sidebar tablet-sidebar slide-in-left ${sidebarOpen ? 'open' : ''} ${tabletExpanded ? 'toggled-expanded' : ''}`}
+        className={`sidebar tablet-sidebar chrono-floating-sidebar ${sidebarOpen ? 'open' : ''} ${tabletExpanded ? 'toggled-expanded' : ''}`}
         role="navigation"
         aria-label="Tablet navigation"
       >
@@ -83,7 +87,7 @@ export const TabletSidebar = React.memo((props) => {
 });
 
 export const ResponsiveSidebar = React.memo((props) => {
-  const { isDesktop, isTablet, isMobile, sidebarOpen, setSidebarOpen } = useSidebar();
+  const { isDesktop, isTablet, sidebarOpen, setSidebarOpen } = useSidebar();
 
   // Gesture: swipe right to open, swipe left to close
   useEffect(() => {
@@ -105,10 +109,8 @@ export const ResponsiveSidebar = React.memo((props) => {
       // Check if swipe is horizontal and significant
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 80) {
         if (diffX > 0 && !sidebarOpen && startX < 50) {
-          // Edge swipe right to open
           setSidebarOpen(true);
         } else if (diffX < 0 && sidebarOpen) {
-          // Swipe left to close
           setSidebarOpen(false);
         }
       }
