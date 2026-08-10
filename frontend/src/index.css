@@ -4574,6 +4574,77 @@ select.input-field {
   color: #D8BE8C;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   CHRONO 3D LOGIN LAYOUT — CINEMATIC SPLIT SCREEN
+   ══════════════════════════════════════════════════════════════════════════════ */
+.chrono-3d-login-layout {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 36px;
+  box-sizing: border-box;
+  background: var(--bg-base);
+  position: relative;
+}
+
+.chrono-3d-split-container {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 32px;
+  width: 100%;
+  max-width: 1440px;
+  margin: auto;
+  align-items: center;
+  z-index: 2;
+}
+
+.chrono-auth-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chrono-3d-scene-column {
+  width: 100%;
+  height: 620px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: #050505;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+.quick-demo-trio-card.active-demo {
+  border-color: var(--accent);
+  background: var(--bg-surface);
+}
+
+/* ── Mobile & Tablet Responsiveness ────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .chrono-3d-split-container {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+  }
+
+  .chrono-3d-scene-column {
+    height: 320px;
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .chrono-3d-login-layout {
+    padding: 14px 16px;
+  }
+
+  .chrono-3d-scene-column {
+    height: 240px;
+  }
+}
+
 
 
 

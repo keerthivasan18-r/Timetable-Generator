@@ -5,6 +5,7 @@ import {
   ArrowRight, RefreshCw, Sun, Moon, CheckCircle2, Clock,
   Sparkles, AlertCircle, Search, ShieldCheck, Zap, Cloud, Cpu, Activity
 } from 'lucide-react';
+import Chrono3DTimeCore from './Chrono3DTimeCore';
 
 export default function ChronoOSLogin({
   theme,
@@ -81,13 +82,19 @@ export default function ChronoOSLogin({
   const roles = [
     { id: 'hod', label: 'HOD Admin', icon: <Shield size={16} />, demoEmail: 'hod@college.edu', demoPwd: 'Admin123' },
     { id: 'staff', label: 'Faculty Staff', icon: <Users size={16} />, demoEmail: 'STF001', demoPwd: 'Staff@123' },
+    { id: 'student', label: 'Student Portal', icon: <GraduationCap size={16} />, demoEmail: 'CS202401', demoPwd: 'Student@123' }
   ];
 
-  return (
-    <div className="chrono-os-login-container">
-      {/* ── Background AI Timetable Neural Network Visualizer ──────────────────── */}
-      <BackgroundNeuralVisualizer theme={theme} />
+  const handleRoleSelect = (r) => {
+    setRole(r.id);
+    setEmail(r.demoEmail);
+    if (fillDemo) {
+      fillDemo(r.id, r.demoEmail, r.demoPwd);
+    }
+  };
 
+  return (
+    <div className="chrono-3d-login-layout">
       {/* ── Dynamic Island Success Notification ────────────────────────────────── */}
       <AnimatePresence>
         {loginSuccess && (
@@ -102,7 +109,7 @@ export default function ChronoOSLogin({
               <CheckCircle2 size={20} className="island-success-icon" />
               <div className="island-text-group">
                 <span className="island-title">Authenticated Successfully</span>
-                <span className="island-sub">Unlocking Chrono Glass OS...</span>
+                <span className="island-sub">Unlocking ChronoAI Intelligence...</span>
               </div>
               <motion.div
                 className="island-loader-spinner"
@@ -151,234 +158,200 @@ export default function ChronoOSLogin({
         </div>
       </header>
 
-      {/* ── PERFECTLY CENTERED EXPERIENCE ─────────────────────────────────────── */}
-      <main className="chrono-login-centered-wrapper">
+      {/* ── CINEMATIC SPLIT CONTENT CONTAINER ─────────────────────────────────── */}
+      <div className="chrono-3d-split-container">
         
-        {/* Logo */}
-        <motion.div
-          className="login-brand-header"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <span className="brand-title">ChronoAI <span className="brand-badge">OS</span></span>
-        </motion.div>
+        {/* LEFT COLUMN: AUTHENTICATION FORM */}
+        <div className="chrono-auth-column">
+          <motion.div
+            className="login-brand-header"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="brand-title">ChronoAI <span className="brand-badge">OS</span></span>
+          </motion.div>
 
-        {/* 150-180px Large AI Intelligence Core Orb */}
-        <motion.div
-          className="large-ai-orb-wrapper"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, type: 'spring', stiffness: 200, damping: 20 }}
-        >
-          <div className={`large-ai-orb-glass ${isTyping ? 'orb-reacting' : ''}`}>
-            {/* Rotating outer light rings */}
-            <motion.div
-              className="orb-outer-ring ring-primary"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-            />
-            <motion.div
-              className="orb-outer-ring ring-secondary"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-            />
-            
-            {/* Breathing Inner Glowing Particle Core */}
-            <motion.div
-              className="orb-inner-core"
-              animate={{
-                scale: isTyping ? [1, 1.25, 1.1] : [1, 1.12, 1],
-                opacity: isTyping ? [0.9, 1, 0.9] : [0.75, 0.95, 0.75]
-              }}
-              transition={{ duration: isTyping ? 1.5 : 4, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            
-            <Sparkles size={36} className="orb-center-sparkle" />
-          </div>
-        </motion.div>
+          <motion.div
+            className="login-welcome-headings"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h1 className="welcome-main-title">
+              {greeting.text}, <span className="welcome-red-text">Welcome Back</span>
+            </h1>
+            <p className="welcome-sub-title">Intelligent Academic Timetable Platform</p>
+          </motion.div>
 
-        {/* Welcome Section */}
-        <motion.div
-          className="login-welcome-headings"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h1 className="welcome-main-title">
-            {greeting.text}, <span className="welcome-red-text">Welcome Back</span>
-          </h1>
-          <p className="welcome-sub-title">AI-Powered Timetable Intelligence Platform</p>
-        </motion.div>
-
-        {/* Floating Glass Login Card (480px - 520px Width, 32px Radius) */}
-        <motion.div
-          className={`glass-login-card-centered ${loginError ? 'shake-error' : ''}`}
-          initial={{ opacity: 0, y: 20, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'spring', damping: 26, stiffness: 300, delay: 0.3 }}
-        >
-          {/* Animated Role Switcher Pills */}
-          <div className="role-segmented-control" role="tablist" aria-label="Select User Role">
-            {roles.map((r) => {
-              const isActive = role === r.id;
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  className={`segmented-role-btn ${isActive ? 'active' : ''}`}
-                  onClick={() => {
-                    setRole(r.id);
-                    setEmail(r.demoEmail);
-                  }}
-                  role="tab"
-                  aria-selected={isActive}
-                >
-                  {isActive && (
-                    <motion.div
-                      className="segmented-active-pill"
-                      layoutId="segmented-role-pill"
-                      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                    />
-                  )}
-                  <span className="role-btn-icon">{r.icon}</span>
-                  <span className="role-btn-label">{r.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="login-glass-form">
-            <div className="glass-form-group">
-              <label className="glass-form-label" htmlFor="login-email-input">
-                {role === 'hod' ? 'HOD ID or Email' : 'Staff ID or Email'}
-              </label>
-              <div className="glass-input-wrapper">
-                <Mail size={17} className="input-prefix-icon" />
-                <input
-                  id="login-email-input"
-                  type="text"
-                  className="glass-input-field"
-                  placeholder={role === 'hod' ? 'hod@college.edu' : 'STF001'}
-                  value={email}
-                  onChange={handleInputChange(setEmail)}
-                  autoFocus
-                  autoComplete="username"
-                  required
-                />
-              </div>
+          {/* Floating Glass Login Card */}
+          <motion.div
+            className={`glass-login-card-centered ${loginError ? 'shake-error' : ''}`}
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 300, delay: 0.3 }}
+          >
+            {/* Animated Role Switcher Pills */}
+            <div className="role-segmented-control" role="tablist" aria-label="Select User Role">
+              {roles.map((r) => {
+                const isActive = role === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className={`segmented-role-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => handleRoleSelect(r)}
+                    role="tab"
+                    aria-selected={isActive}
+                  >
+                    {isActive && (
+                      <motion.div
+                        className="segmented-active-pill"
+                        layoutId="segmented-role-pill"
+                        transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                      />
+                    )}
+                    <span className="role-btn-icon">{r.icon}</span>
+                    <span className="role-btn-label">{r.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="glass-form-group">
-              <div className="label-row">
-                <label className="glass-form-label" htmlFor="login-password-input">Password</label>
-                {capsLockOn && (
-                  <span className="caps-lock-warning">
-                    <AlertCircle size={12} /> Caps Lock ON
-                  </span>
-                )}
-              </div>
-              <div className="glass-input-wrapper">
-                <Lock size={17} className="input-prefix-icon" />
-                <input
-                  id="login-password-input"
-                  type={showPassword ? 'text' : 'password'}
-                  className="glass-input-field"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={handleInputChange(setPassword)}
-                  onKeyUp={handleKeyUp}
-                  autoComplete="current-password"
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-eye-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide Password' : 'Show Password'}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-
-              {password.length > 0 && (
-                <div className="pwd-strength-bar-wrapper">
-                  <div
-                    className="pwd-strength-fill"
-                    style={{ width: `${pwdStrength.score}%`, background: pwdStrength.color }}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="login-glass-form">
+              <div className="glass-form-group">
+                <label className="glass-form-label" htmlFor="login-email-input">
+                  {role === 'hod' ? 'HOD ID or Email' : role === 'staff' ? 'Staff ID or Email' : 'Register No'}
+                </label>
+                <div className="glass-input-wrapper">
+                  <Mail size={17} className="input-prefix-icon" />
+                  <input
+                    id="login-email-input"
+                    type="text"
+                    className="glass-input-field"
+                    placeholder={role === 'hod' ? 'hod@college.edu' : role === 'staff' ? 'STF001' : 'CS202401'}
+                    value={email}
+                    onChange={handleInputChange(setEmail)}
+                    autoFocus
+                    autoComplete="username"
+                    required
                   />
                 </div>
-              )}
-            </div>
-
-            {loginError && (
-              <motion.div
-                className="glass-error-banner"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <AlertCircle size={16} />
-                <span>{loginError}</span>
-              </motion.div>
-            )}
-
-            <motion.button
-              type="submit"
-              className="glass-continue-btn"
-              disabled={loginLoading}
-              whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.985 }}
-            >
-              {loginLoading ? (
-                <>
-                  <RefreshCw size={17} className="spin-icon" />
-                  <span>Authenticating Credentials...</span>
-                </>
-              ) : loginSuccess ? (
-                <>
-                  <CheckCircle2 size={18} />
-                  <span>Authenticated ✓</span>
-                </>
-              ) : (
-                <>
-                  <span>Continue</span>
-                  <ArrowRight size={17} className="btn-arrow-icon" />
-                </>
-              )}
-            </motion.button>
-          </form>
-        </motion.div>
-
-        {/* Three Floating Quick Login Cards Side-by-Side */}
-        <motion.div
-          className="quick-login-cards-trio"
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          {roles.map((r) => (
-            <motion.button
-              key={r.id}
-              type="button"
-              className="quick-demo-trio-card"
-              onClick={() => {
-                setRole(r.id);
-                fillDemo(r.id, r.demoEmail, r.demoPwd);
-              }}
-              whileHover={{ y: -4, scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <div className="trio-card-icon">{r.icon}</div>
-              <div className="trio-card-info">
-                <span className="trio-card-title">{r.label}</span>
-                <span className="trio-card-sub">{r.demoEmail}</span>
               </div>
-            </motion.button>
-          ))}
-        </motion.div>
 
-      </main>
+              <div className="glass-form-group">
+                <div className="label-row">
+                  <label className="glass-form-label" htmlFor="login-password-input">Password</label>
+                  {capsLockOn && (
+                    <span className="caps-lock-warning">
+                      <AlertCircle size={12} /> Caps Lock ON
+                    </span>
+                  )}
+                </div>
+                <div className="glass-input-wrapper">
+                  <Lock size={17} className="input-prefix-icon" />
+                  <input
+                    id="login-password-input"
+                    type={showPassword ? 'text' : 'password'}
+                    className="glass-input-field"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={handleInputChange(setPassword)}
+                    onKeyUp={handleKeyUp}
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-eye-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+
+                {password.length > 0 && (
+                  <div className="pwd-strength-bar-wrapper">
+                    <div
+                      className="pwd-strength-fill"
+                      style={{ width: `${pwdStrength.score}%`, background: pwdStrength.color }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {loginError && (
+                <motion.div
+                  className="glass-error-banner"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <AlertCircle size={16} />
+                  <span>{loginError}</span>
+                </motion.div>
+              )}
+
+              <motion.button
+                type="submit"
+                className="glass-continue-btn"
+                disabled={loginLoading}
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
+              >
+                {loginLoading ? (
+                  <>
+                    <RefreshCw size={17} className="spin-icon" />
+                    <span>Authenticating Credentials...</span>
+                  </>
+                ) : loginSuccess ? (
+                  <>
+                    <CheckCircle2 size={18} />
+                    <span>Authenticated ✓</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Enter ChronoAI</span>
+                    <ArrowRight size={17} className="btn-arrow-icon" />
+                  </>
+                )}
+              </motion.button>
+            </form>
+          </motion.div>
+
+          {/* Quick Demo Credentials Trio */}
+          <motion.div
+            className="quick-login-cards-trio"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            {roles.map((r) => (
+              <motion.button
+                key={r.id}
+                type="button"
+                className={`quick-demo-trio-card ${role === r.id ? 'active-demo' : ''}`}
+                onClick={() => handleRoleSelect(r)}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <div className="trio-card-icon">{r.icon}</div>
+                <div className="trio-card-info">
+                  <span className="trio-card-title">{r.label}</span>
+                  <span className="trio-card-sub">{r.demoEmail}</span>
+                </div>
+              </motion.button>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* RIGHT COLUMN: 3D INTERACTIVE TIME CORE CANVAS */}
+        <div className="chrono-3d-scene-column" aria-hidden="true">
+          <Chrono3DTimeCore />
+        </div>
+
+      </div>
 
       {/* Floating Status Capsules at Bottom */}
       <motion.footer
@@ -389,11 +362,11 @@ export default function ChronoOSLogin({
       >
         <div className="security-pill">
           <ShieldCheck size={13} />
-          <span>Secure Authentication</span>
+          <span>Secure WebGL Authentication</span>
         </div>
         <div className="security-pill">
           <Zap size={13} />
-          <span>AI Scheduling Engine</span>
+          <span>AI Constraint Solver</span>
         </div>
         <div className="security-pill">
           <Lock size={13} />
@@ -405,97 +378,5 @@ export default function ChronoOSLogin({
         </div>
       </motion.footer>
     </div>
-  );
-}
-
-// ── Background Neural Timetable Network Visualizer ────────────────────────────
-function BackgroundNeuralVisualizer({ theme }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let animId;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
-
-    const isDark = theme === 'dark';
-
-    const handleResize = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    // Neural nodes representing timetable slots & course connections
-    const nodeCount = 28;
-    const nodes = Array.from({ length: nodeCount }).map(() => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      radius: Math.random() * 2 + 1.5,
-    }));
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      // Connect neural nodes with red connection lines
-      for (let i = 0; i < nodeCount; i++) {
-        const nodeA = nodes[i];
-        nodeA.x += nodeA.vx;
-        nodeA.y += nodeA.vy;
-
-        if (nodeA.x < 0 || nodeA.x > width) nodeA.vx *= -1;
-        if (nodeA.y < 0 || nodeA.y > height) nodeA.vy *= -1;
-
-        for (let j = i + 1; j < nodeCount; j++) {
-          const nodeB = nodes[j];
-          const dx = nodeB.x - nodeA.x;
-          const dy = nodeB.y - nodeA.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 190) {
-            const alpha = (1 - dist / 190) * 0.16;
-            ctx.strokeStyle = `rgba(220, 38, 38, ${alpha})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(nodeA.x, nodeA.y);
-            ctx.lineTo(nodeB.x, nodeB.y);
-            ctx.stroke();
-          }
-        }
-
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
-        ctx.beginPath();
-        ctx.arc(nodeA.x, nodeA.y, nodeA.radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      animId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animId);
-    };
-  }, [theme]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }}
-    />
   );
 }
