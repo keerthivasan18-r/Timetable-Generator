@@ -37,26 +37,26 @@ export default function ChronoCanvasBackground({ theme = 'dark' }) {
       {
         x: width * 0.2,
         y: height * 0.2,
-        radius: isDark ? 280 : 320,
+        radius: isDark ? 300 : 320,
         vx: 0.3,
         vy: 0.2,
-        color: isDark ? 'rgba(0, 113, 227, 0.07)' : 'rgba(0, 113, 227, 0.05)',
+        color: isDark ? 'rgba(200, 168, 120, 0.025)' : 'rgba(0, 113, 227, 0.05)',
       },
       {
         x: width * 0.8,
         y: height * 0.3,
-        radius: isDark ? 320 : 360,
+        radius: isDark ? 340 : 360,
         vx: -0.2,
         vy: 0.3,
-        color: isDark ? 'rgba(94, 92, 230, 0.06)' : 'rgba(94, 92, 230, 0.04)',
+        color: isDark ? 'rgba(20, 90, 60, 0.025)' : 'rgba(94, 92, 230, 0.04)',
       },
       {
         x: width * 0.5,
         y: height * 0.8,
-        radius: isDark ? 350 : 380,
+        radius: isDark ? 360 : 380,
         vx: 0.25,
         vy: -0.2,
-        color: isDark ? 'rgba(52, 199, 89, 0.05)' : 'rgba(52, 199, 89, 0.03)',
+        color: isDark ? 'rgba(216, 190, 140, 0.02)' : 'rgba(52, 199, 89, 0.03)',
       },
     ];
 

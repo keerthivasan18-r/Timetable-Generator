@@ -162,122 +162,142 @@
    DESIGN TOKENS — DARK MODE
    ══════════════════════════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
-  --bg-base:         #0D0D11;
-  --bg-surface:      #17171F;
-  --bg-elevated:     #22222E;
-  --bg-card:         #17171F;
-  --bg-input:        #22222E;
-  --bg-hover:        rgba(220,38,38,.12);
-  --bg-active:       rgba(220,38,38,.20);
-  --bg-sidebar:      #17171F;
-  --bg-topbar:       rgba(23,23,31,.88);
+  /* ── Base Surfaces (Obsidian Scale) ─────────────────────────────────────── */
+  --bg-base:         #050505;
+  --bg-surface:      #101010;
+  --bg-elevated:     #1C1C1C;
+  --bg-card:         #101010;
+  --bg-input:        #0F0F0F;
+  --bg-hover:        #181818;
+  --bg-active:       rgba(200, 168, 120, 0.12);
+  --bg-sidebar:      #080808;
+  --bg-topbar:       rgba(5, 5, 5, 0.92);
 
-  --text-primary:    #F9FAFB;
-  --text-secondary:  #D1D5DB;
-  --text-muted:      #9CA3AF;
-  --text-heading:    #FFFFFF;
-  --text-disabled:   #4B5563;
-  --text-inverse:    #111827;
+  /* ── Text (Off-white / Warm Gray) ────────────────────────────────────────── */
+  --text-primary:    #F2F0EB;
+  --text-secondary:  #B0ACA3;
+  --text-muted:      #77736B;
+  --text-heading:    #F2F0EB;
+  --text-disabled:   #55524D;
+  --text-inverse:    #050505;
 
-  --border:          rgba(239,68,68,.25);
-  --border-strong:   rgba(239,68,68,.40);
-  --border-input:    rgba(255,255,255,.14);
-  --border-focus:    #EF4444;
+  /* ── Borders ────────────────────────────────────────────────────────────── */
+  --border:          #2A2A2A;
+  --border-subtle:   #1F1F1F;
+  --border-strong:   #3A3328;
+  --border-input:    #2A2A2A;
+  --border-focus:    #C8A878;
 
-  --shadow-xs:       0 1px 2px rgba(0,0,0,.40);
-  --shadow-sm:       0 1px 3px rgba(0,0,0,.50);
-  --shadow-md:       0 4px 16px rgba(0,0,0,.50);
-  --shadow-lg:       0 20px 60px rgba(0,0,0,.60);
-  --shadow-card:     0 2px 8px rgba(0,0,0,.40);
-  --shadow-card-h:   0 12px 40px rgba(220,38,38,.25);
-  --shadow-modal:    0 32px 80px rgba(0,0,0,.80);
-  --shadow-topbar:   0 1px 0 rgba(239,68,68,.20);
+  /* ── Shadows ────────────────────────────────────────────────────────────── */
+  --shadow-xs:       0 1px 2px rgba(0,0,0,.60);
+  --shadow-sm:       0 2px 4px rgba(0,0,0,.70);
+  --shadow-md:       0 4px 20px rgba(0,0,0,.75);
+  --shadow-lg:       0 16px 48px rgba(0,0,0,.85);
+  --shadow-card:     0 2px 10px rgba(0,0,0,.50);
+  --shadow-card-h:   0 8px 30px rgba(0,0,0,.70);
+  --shadow-modal:    0 24px 64px rgba(0,0,0,.90);
+  --shadow-topbar:   0 1px 0 #202020;
 
-  --accent:          #EF4444;
-  --accent-hover:    #F87171;
-  --accent-dim:      rgba(239,68,68,.15);
-  --accent-border:   rgba(239,68,68,.35);
+  /* ── Primary Accent (Champagne Gold) ─────────────────────────────────────── */
+  --accent:          #C8A878;
+  --accent-hover:    #D8BE8C;
+  --accent-dim:      rgba(200, 168, 120, 0.12);
+  --accent-border:   #8F7448;
 
-  --success:         #22C55E;
-  --success-dim:     rgba(34,197,94,.15);
-  --success-border:  rgba(34,197,94,.35);
-  --success-text:    #22C55E;
+  --gold:            #C8A878;
+  --gold-light:      #D8BE8C;
+  --gold-dark:       #8F7448;
+  --gold-muted:      #A98C5F;
 
-  --warning:         #F59E0B;
-  --warning-dim:     rgba(245,158,11,.15);
-  --warning-border:  rgba(245,158,11,.35);
-  --warning-text:    #F59E0B;
+  /* ── Secondary Accent (Deep Emerald Green) ───────────────────────────────── */
+  --emerald:         #145A3C;
+  --emerald-deep:    #0B3B2A;
+  --emerald-medium:  #1F6B4A;
+  --emerald-bright:  #38A169;
+  --emerald-soft:    rgba(56,161,105,.12);
+  --emerald-dim:     rgba(20,90,60,.20);
+  --emerald-border:  #1F6B4A;
+  --emerald-bg:      rgba(20,90,60,.18);
+  --emerald-text:    #7ED6A7;
 
-  --danger:          #EF4444;
-  --danger-dim:      rgba(239,68,68,.15);
-  --danger-border:   rgba(239,68,68,.35);
-  --danger-text:     #EF4444;
+  /* ── Status Colors ──────────────────────────────────────────────────────── */
+  --success:         #145A3C;
+  --success-dim:     rgba(20,90,60,.20);
+  --success-border:  #1F6B4A;
+  --success-text:    #7ED6A7;
 
-  --blue:            #EF4444;
-  --blue-light:      #F87171;
-  --blue-dim:        rgba(239,68,68,.15);
-  --blue-border:     rgba(239,68,68,.35);
-  --blue-text:       #EF4444;
+  --warning:         #A98C5F;
+  --warning-dim:     rgba(200,168,120,.12);
+  --warning-border:  #8F7448;
+  --warning-text:    #D8BE8C;
 
-  --purple:          #BF5AF2;
-  --purple-light:    #BF5AF2;
-  --purple-dim:      rgba(191,90,242,.10);
-  --purple-border:   rgba(191,90,242,.25);
-  --purple-text:     #BF5AF2;
-  --purple-bg:       rgba(191,90,242,.10);
+  --danger:          #8B2626;
+  --danger-dim:      rgba(139,38,38,.20);
+  --danger-border:   #6E2020;
+  --danger-text:     #E57373;
 
-  --emerald:         #30D158;
-  --emerald-light:   #30D158;
-  --emerald-dim:     rgba(48,209,88,.10);
-  --emerald-border:  rgba(48,209,88,.25);
-  --emerald-bg:      rgba(48,209,88,.10);
+  /* ── Color Palette Aliases for Dark Mode ───────────────────────────────── */
+  --blue:            #C8A878;
+  --blue-light:      #D8BE8C;
+  --blue-dim:        rgba(200,168,120,.12);
+  --blue-border:     #8F7448;
+  --blue-text:       #D8BE8C;
 
-  --indigo:          #5E5CE6;
-  --indigo-light:    #7D7AFF;
-  --indigo-dim:      rgba(94,92,230,.10);
-  --indigo-border:   rgba(94,92,230,.25);
+  --purple:          #C8A878;
+  --purple-light:    #D8BE8C;
+  --purple-dim:      rgba(200,168,120,.10);
+  --purple-border:   #8F7448;
+  --purple-text:     #D8BE8C;
+  --purple-bg:       rgba(200,168,120,.10);
 
-  --orange:          #FF9F0A;
-  --orange-light:    #FF9F0A;
-  --orange-dim:      rgba(255,159,10,.10);
-  --orange-border:   rgba(255,159,10,.25);
-  --orange-bg:       rgba(255,159,10,.10);
+  --indigo:          #C8A878;
+  --indigo-light:    #D8BE8C;
+  --indigo-dim:      rgba(200,168,120,.10);
+  --indigo-border:   #8F7448;
 
-  --cyan:            #32ADE6;
-  --cyan-light:      #32ADE6;
-  --cyan-dim:        rgba(50,173,230,.10);
-  --cyan-border:     rgba(50,173,230,.25);
-  --cyan-bg:         rgba(50,173,230,.10);
+  --orange:          #A98C5F;
+  --orange-light:    #D8BE8C;
+  --orange-dim:      rgba(200,168,120,.10);
+  --orange-border:   #8F7448;
+  --orange-bg:       rgba(200,168,120,.10);
 
-  --rose:            #FF453A;
-  --rose-light:      #FF453A;
-  --rose-dim:        rgba(255,69,58,.10);
-  --rose-border:     rgba(255,69,58,.25);
-  --rose-bg:         rgba(255,69,58,.10);
+  --cyan:            #1F6B4A;
+  --cyan-light:      #7ED6A7;
+  --cyan-dim:        rgba(20,90,60,.18);
+  --cyan-border:     #1F6B4A;
+  --cyan-bg:         rgba(20,90,60,.18);
 
-  --green:           #30D158;
-  --green-light:     #30D158;
-  --green-dim:       rgba(48,209,88,.10);
-  --green-border:    rgba(48,209,88,.25);
-  --green-bg:        rgba(48,209,88,.10);
+  --rose:            #8B2626;
+  --rose-light:      #E57373;
+  --rose-dim:        rgba(139,38,38,.20);
+  --rose-border:     #6E2020;
+  --rose-bg:         rgba(139,38,38,.20);
 
-  --amber:           #FF9F0A;
-  --amber-light:     #FF9F0A;
-  --amber-dim:       rgba(255,159,10,.10);
-  --amber-border:    rgba(255,159,10,.25);
-  --amber-bg:        rgba(255,159,10,.10);
+  --green:           #145A3C;
+  --green-light:     #7ED6A7;
+  --green-dim:       rgba(20,90,60,.20);
+  --green-border:    #1F6B4A;
+  --green-bg:        rgba(20,90,60,.20);
 
-  --cell-free-bg:    #2C2C2E;
-  --cell-free-text:  #636366;
-  --cell-lab-bg:     rgba(48,209,88,.06);
-  --cell-lab-border: rgba(48,209,88,.20);
+  --amber:           #A98C5F;
+  --amber-light:     #D8BE8C;
+  --amber-dim:       rgba(200,168,120,.12);
+  --amber-border:    #8F7448;
+  --amber-bg:        rgba(200,168,120,.12);
 
-  --glass-bg:        rgba(28,28,30,.84);
-  --glass-border:    rgba(255,255,255,.08);
+  /* ── Timetable Cells (Dark Mode) ───────────────────────────────────────── */
+  --cell-free-bg:    #0F0F0F;
+  --cell-free-text:  #77736B;
+  --cell-lab-bg:     rgba(20,90,60,.22);
+  --cell-lab-border: #1F6B4A;
+
+  /* ── Glass Surfaces ─────────────────────────────────────────────────────── */
+  --glass-bg:        rgba(16,16,16,.88);
+  --glass-border:    #2A2A2A;
   --glass-blur:      blur(20px) saturate(180%);
   --glass-blur-lg:   blur(40px) saturate(200%);
 
-  --shadow-glow-blue: 0 0 0 3px rgba(10,132,255,.25);
+  --shadow-glow-blue: 0 0 0 3px rgba(200,168,120,.20);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -4418,6 +4438,140 @@ select.input-field {
   .trio-card-sub {
     max-width: 100%;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   CHRONO OS LOGIN — DARK MODE OVERRIDES (Obsidian + Champagne Gold)
+   ══════════════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] .chrono-os-login-container {
+  background: #050505;
+}
+
+[data-theme="dark"] .welcome-red-text {
+  background: linear-gradient(135deg, #C8A878, #D8BE8C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="dark"] .glass-clock-pill,
+[data-theme="dark"] .login-action-btn,
+[data-theme="dark"] .quick-demo-trio-card,
+[data-theme="dark"] .security-pill {
+  background: #101010;
+  border-color: #2A2A2A;
+  color: #F2F0EB;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .clock-icon {
+  color: #C8A878;
+}
+
+[data-theme="dark"] .clock-date-divider,
+[data-theme="dark"] .clock-date {
+  color: #B0ACA3;
+}
+
+[data-theme="dark"] .login-action-btn:hover,
+[data-theme="dark"] .quick-demo-trio-card:hover {
+  background: #181818;
+  border-color: #8F7448;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+
+[data-theme="dark"] .brand-title,
+[data-theme="dark"] .welcome-main-title,
+[data-theme="dark"] .glass-form-label,
+[data-theme="dark"] .trio-card-title {
+  color: #F2F0EB;
+}
+
+[data-theme="dark"] .brand-badge {
+  background: rgba(200, 168, 120, 0.12);
+  color: #D8BE8C;
+  border-color: #8F7448;
+}
+
+[data-theme="dark"] .large-ai-orb-glass {
+  background: radial-gradient(circle at 35% 35%, rgba(200, 168, 120, 0.15), rgba(10, 10, 10, 0.95) 70%);
+  border-color: #8F7448;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 2px 6px rgba(200, 168, 120, 0.2);
+}
+
+[data-theme="dark"] .orb-outer-ring.ring-primary {
+  border-color: #C8A878;
+}
+
+[data-theme="dark"] .orb-outer-ring.ring-secondary {
+  border-color: #8F7448;
+}
+
+[data-theme="dark"] .orb-inner-core {
+  background: radial-gradient(circle, #C8A878, #8F7448, #0A0A0A);
+}
+
+[data-theme="dark"] .welcome-sub-title,
+[data-theme="dark"] .trio-card-sub {
+  color: #B0ACA3;
+}
+
+[data-theme="dark"] .glass-login-card-centered {
+  background: #101010;
+  border-color: #302A20;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .role-segmented-control {
+  background: #0A0A0A;
+  border-color: #2A2A2A;
+}
+
+[data-theme="dark"] .segmented-role-btn {
+  color: #B0ACA3;
+}
+
+[data-theme="dark"] .segmented-role-btn:hover {
+  color: #F2F0EB;
+}
+
+[data-theme="dark"] .segmented-role-btn.active {
+  color: #050505;
+}
+
+[data-theme="dark"] .segmented-active-pill {
+  background: linear-gradient(135deg, #C8A878, #D8BE8C);
+  box-shadow: 0 6px 18px rgba(200, 168, 120, 0.3);
+}
+
+[data-theme="dark"] .glass-input-field {
+  background: #0F0F0F;
+  border-color: #2A2A2A;
+  color: #F2F0EB;
+}
+
+[data-theme="dark"] .glass-input-field:focus {
+  border-color: #C8A878;
+  box-shadow: 0 0 0 4px rgba(200, 168, 120, 0.16);
+  background: #151515;
+}
+
+[data-theme="dark"] .glass-input-wrapper:focus-within .input-prefix-icon {
+  color: #C8A878;
+}
+
+[data-theme="dark"] .glass-continue-btn {
+  background: linear-gradient(135deg, #C8A878, #D8BE8C);
+  color: #050505;
+  box-shadow: 0 8px 25px rgba(200, 168, 120, 0.25);
+}
+
+[data-theme="dark"] .glass-continue-btn:hover {
+  box-shadow: 0 12px 32px rgba(200, 168, 120, 0.4);
+}
+
+[data-theme="dark"] .trio-card-icon {
+  background: rgba(200, 168, 120, 0.12);
+  color: #D8BE8C;
 }
 
 
