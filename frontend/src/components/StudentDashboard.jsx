@@ -7,6 +7,8 @@ export default function StudentDashboard({ user }) {
   const [settings, setSettings] = useState({});
   const [notifications, setNotifications] = useState([]);
   const [selectedElectiveSubject, setSelectedElectiveSubject] = useState('Software Engineering');
+  const [timetableMode, setTimetableMode] = useState('grid');
+  const [selectedDayTab, setSelectedDayTab] = useState(1);
 
   useEffect(() => {
     loadData();
@@ -69,105 +71,199 @@ export default function StudentDashboard({ user }) {
           </div>
 
           {hasPublishedTable ? (
-            <div style={{ overflowX: 'auto' }}>
-              <div className="timetable-grid">
-                {/* Header row */}
-                <div className="timetable-cell header">Timings</div>
-                {Array.from({ length: settings.dayOrdersCount }).map((_, index) => (
-                  <div key={index} className="timetable-cell header">
-                    Day Order {index + 1}
-                  </div>
-                ))}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+                <div className="timetable-view-toggle">
+                  <button
+                    className={`timetable-view-toggle-btn ${timetableMode === 'grid' ? 'active' : ''}`}
+                    onClick={() => setTimetableMode('grid')}
+                    type="button"
+                  >
+                    📊 Grid View
+                  </button>
+                  <button
+                    className={`timetable-view-toggle-btn ${timetableMode === 'daily' ? 'active' : ''}`}
+                    onClick={() => setTimetableMode('daily')}
+                    type="button"
+                  >
+                    📱 Daily Cards
+                  </button>
+                </div>
+              </div>
 
-                {/* Grid Slots */}
-                {Array.from({ length: settings.periodsPerDay }).map((_, pIdx) => {
-                  const periodNo = pIdx + 1;
-                  const isBreakRow = periodNo === settings.breakAfterPeriod + 1;
-
-                  return (
-                    <React.Fragment key={pIdx}>
-                      {isBreakRow && (
-                        <div style={{
-                          gridColumn: `1 / span ${settings.dayOrdersCount + 1}`,
-                          background: 'rgba(245, 158, 11, 0.05)',
-                          border: '1px dashed rgba(245, 158, 11, 0.2)',
-                          color: 'var(--accent-amber)',
-                          textAlign: 'center',
-                          padding: '0.4rem',
-                          fontSize: '0.75rem',
-                          borderRadius: 'var(--radius-sm)'
-                        }}>
-                          ☕ TEA BREAK: {settings.timings.break}
-                        </div>
-                      )}
-
-                      <div className="timetable-cell header" style={{ fontSize: '0.7rem', padding: '0.5rem', textAlign: 'center' }}>
-                        <strong>Period {periodNo}</strong>
-                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                          {settings.timings[periodNo]}
-                        </div>
+              {timetableMode === 'grid' ? (
+                <div className="timetable-wrapper">
+                  <div className="timetable-grid">
+                    {/* Header row */}
+                    <div className="timetable-cell header">Timings</div>
+                    {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, index) => (
+                      <div key={index} className="timetable-cell header">
+                        Day Order {index + 1}
                       </div>
+                    ))}
 
-                      {Array.from({ length: settings.dayOrdersCount }).map((_, dIdx) => {
-                        const dayOrder = dIdx + 1;
-                        const rawSlot = timetable.tables[user.section]?.[dayOrder]?.[periodNo];
+                    {/* Grid Slots */}
+                    {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
+                      const periodNo = pIdx + 1;
+                      const isBreakRow = periodNo === (settings.breakAfterPeriod || 3) + 1;
 
-                        let slot = rawSlot;
-                        if (rawSlot?.isElective && rawSlot?.courses && rawSlot.courses.length > 0) {
-                          const chosen = rawSlot.courses.find(c => c.subjectId === selectedElectiveSubject || c.subjectName === selectedElectiveSubject) || rawSlot.courses[0];
-                          slot = {
-                            subjectId: chosen.subjectId,
-                            subjectName: chosen.subjectName,
-                            staffName: chosen.staffName,
-                            isElective: true,
-                            electiveName: rawSlot.electiveName
-                          };
-                        }
+                      return (
+                        <React.Fragment key={pIdx}>
+                          {isBreakRow && (
+                            <div style={{
+                              gridColumn: `1 / span ${(settings.dayOrdersCount || 6) + 1}`,
+                              background: 'rgba(245, 158, 11, 0.05)',
+                              border: '1px dashed rgba(245, 158, 11, 0.2)',
+                              color: 'var(--accent-amber)',
+                              textAlign: 'center',
+                              padding: '0.4rem',
+                              fontSize: '0.75rem',
+                              borderRadius: 'var(--radius-sm)'
+                            }}>
+                              ☕ TEA BREAK: {settings.timings?.break}
+                            </div>
+                          )}
 
-                        const isLab = slot?.subjectId === 'CS103' || slot?.subjectName?.toLowerCase().includes('lab');
-                        const isFree = slot?.subjectId === 'FREE';
-                        const isFirstYear = user?.section?.startsWith('1');
-                        const isNoPeriod = periodNo === 5 && isFirstYear && (dayOrder === 1 || dayOrder === 2);
+                          <div className="timetable-cell header" style={{ fontSize: '0.7rem', padding: '0.5rem', textAlign: 'center' }}>
+                            <strong>Period {periodNo}</strong>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                              {settings.timings?.[periodNo]}
+                            </div>
+                          </div>
 
-                        return (
-                          <div 
-                            key={dIdx} 
-                            className={`timetable-cell ${isLab ? 'lab' : ''} ${isFree ? 'free' : ''}`}
-                            style={{ cursor: 'default', opacity: isNoPeriod ? 0.45 : 1 }}
-                          >
-                            {slot?.isNME ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%', textAlign: 'center' }}>
-                                <span className="badge badge-indigo" style={{ fontSize: '0.6rem' }}>⚡ NME Session</span>
-                                <div style={{ fontWeight: 700, color: 'white', fontSize: '0.72rem' }}>NME (12:40-1:30 PM)</div>
-                                <span className="cell-slot" style={{ marginTop: 'auto' }}>P{periodNo}</span>
+                          {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, dIdx) => {
+                            const dayOrder = dIdx + 1;
+                            const rawSlot = timetable.tables[user.section]?.[dayOrder]?.[periodNo];
+
+                            let slot = rawSlot;
+                            if (rawSlot?.isElective && rawSlot?.courses && rawSlot.courses.length > 0) {
+                              const chosen = rawSlot.courses.find(c => c.subjectId === selectedElectiveSubject || c.subjectName === selectedElectiveSubject) || rawSlot.courses[0];
+                              slot = {
+                                subjectId: chosen.subjectId,
+                                subjectName: chosen.subjectName,
+                                staffName: chosen.staffName,
+                                isElective: true,
+                                electiveName: rawSlot.electiveName
+                              };
+                            }
+
+                            const isLab = slot?.subjectId === 'CS103' || slot?.subjectName?.toLowerCase().includes('lab');
+                            const isFree = slot?.subjectId === 'FREE';
+                            const isFirstYear = user?.section?.startsWith('1');
+                            const isNoPeriod = periodNo === 5 && isFirstYear && (dayOrder === 1 || dayOrder === 2);
+
+                            return (
+                              <div 
+                                key={dIdx} 
+                                className={`timetable-cell ${isLab ? 'lab' : ''} ${isFree ? 'free' : ''}`}
+                                style={{ cursor: 'default', opacity: isNoPeriod ? 0.45 : 1 }}
+                              >
+                                {slot?.isNME ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%', textAlign: 'center' }}>
+                                    <span className="badge badge-indigo" style={{ fontSize: '0.6rem' }}>⚡ NME Session</span>
+                                    <div style={{ fontWeight: 700, color: 'white', fontSize: '0.72rem' }}>NME (12:40-1:30 PM)</div>
+                                    <span className="cell-slot" style={{ marginTop: 'auto' }}>P{periodNo}</span>
+                                  </div>
+                                ) : isNoPeriod ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '2px' }}>
+                                    <span className="badge badge-gray" style={{ fontSize: '0.6rem' }}>⏹ END OF DAY</span>
+                                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>NME Finish</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="cell-subject" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                      <span>{slot?.subjectId === 'FREE' ? 'Study' : slot?.subjectId}</span>
+                                      {slot?.isElective && <span className="badge badge-purple" style={{ fontSize: '0.58rem', padding: '0px 4px' }}>Elective</span>}
+                                    </div>
+                                    <div className="cell-faculty" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {slot?.subjectName}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyItems: 'space-between', alignItems: 'center', marginTop: 'auto', width: '100%' }}>
+                                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{slot?.staffName}</span>
+                                      <span className="cell-slot" style={{ marginLeft: 'auto' }}>P{periodNo}</span>
+                                    </div>
+                                  </>
+                                )}
                               </div>
-                            ) : isNoPeriod ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '2px' }}>
-                                <span className="badge badge-gray" style={{ fontSize: '0.6rem' }}>⏹ END OF DAY</span>
-                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>NME Finish</span>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="timetable-mobile-nav">
+                    {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`timetable-mobile-tab ${selectedDayTab === i + 1 ? 'active' : ''}`}
+                        onClick={() => setSelectedDayTab(i + 1)}
+                      >
+                        Day Order {i + 1}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="timetable-daily-cards">
+                    {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
+                      const periodNo = pIdx + 1;
+                      const isBreakRow = periodNo === (settings.breakAfterPeriod || 3) + 1;
+                      const rawSlot = timetable.tables[user.section]?.[selectedDayTab]?.[periodNo];
+
+                      let slot = rawSlot;
+                      if (rawSlot?.isElective && rawSlot?.courses && rawSlot.courses.length > 0) {
+                        const chosen = rawSlot.courses.find(c => c.subjectId === selectedElectiveSubject || c.subjectName === selectedElectiveSubject) || rawSlot.courses[0];
+                        slot = {
+                          subjectId: chosen.subjectId,
+                          subjectName: chosen.subjectName,
+                          staffName: chosen.staffName,
+                          isElective: true,
+                          electiveName: rawSlot.electiveName
+                        };
+                      }
+
+                      const isLab = slot?.subjectId === 'CS103' || slot?.subjectName?.toLowerCase().includes('lab');
+                      const isFree = slot?.subjectId === 'FREE';
+
+                      return (
+                        <React.Fragment key={pIdx}>
+                          {isBreakRow && (
+                            <div className="timetable-break" style={{ marginBottom: '12px' }}>
+                              ☕ TEA BREAK — {settings.timings?.break}
+                            </div>
+                          )}
+                          <div className={`timetable-period-card ${isLab ? 'lab' : ''}`}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>
+                                Period {periodNo} ({settings.timings?.[periodNo] || '09:00 - 10:00 AM'})
+                              </span>
+                              {slot?.isElective && <span className="badge badge-purple">Elective Track</span>}
+                            </div>
+                            {!isFree && slot ? (
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                  <strong style={{ fontSize: '0.98rem', color: 'var(--text-heading)' }}>{slot.subjectName}</strong>
+                                  <span className="badge badge-indigo" style={{ fontSize: '0.65rem', fontFamily: 'JetBrains Mono, monospace' }}>{slot.subjectId}</span>
+                                </div>
+                                <div style={{ fontSize: '0.845rem', color: 'var(--text-secondary)' }}>
+                                  Faculty: <strong>{slot.staffName || 'Faculty Member'}</strong>
+                                </div>
                               </div>
                             ) : (
-                              <>
-                                <div className="cell-subject" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                  <span>{slot?.subjectId === 'FREE' ? 'Study' : slot?.subjectId}</span>
-                                  {slot?.isElective && <span className="badge badge-purple" style={{ fontSize: '0.58rem', padding: '0px 4px' }}>Elective</span>}
-                                </div>
-                                <div className="cell-faculty" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {slot?.subjectName}
-                                </div>
-                                <div style={{ display: 'flex', justifyItems: 'space-between', alignItems: 'center', marginTop: 'auto', width: '100%' }}>
-                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{slot?.staffName}</span>
-                                  <span className="cell-slot" style={{ marginLeft: 'auto' }}>P{periodNo}</span>
-                                </div>
-                              </>
+                              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                                Free Slot / Self-Study Period
+                              </div>
                             )}
                           </div>
-                        );
-                      })}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>

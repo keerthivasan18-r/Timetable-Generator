@@ -2481,6 +2481,106 @@ select.input-field {
     min-width: 580px;
   }
 
+  .timetable-grid .timetable-cell:first-child,
+  .timetable-grid .timetable-cell.header:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: var(--bg-surface);
+    box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+  }
+
+  /* Prevent iOS Safari auto-zoom on input focus */
+  input, select, textarea, .input-field {
+    font-size: 16px !important;
+  }
+
+  /* Mobile Timetable Daily View Switcher & Card Layout */
+  .timetable-view-toggle {
+    display: flex;
+    align-items: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    padding: 3px;
+    gap: 3px;
+    margin-bottom: 14px;
+    width: fit-content;
+  }
+
+  .timetable-view-toggle-btn {
+    padding: 6px 14px;
+    border-radius: var(--r-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all var(--t-fast);
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .timetable-view-toggle-btn.active {
+    background: var(--bg-surface);
+    color: var(--text-heading);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .timetable-mobile-nav {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .timetable-mobile-nav::-webkit-scrollbar { display: none; }
+
+  .timetable-mobile-tab {
+    padding: 8px 16px;
+    border-radius: var(--r-full);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .timetable-mobile-tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(220,38,38,0.3);
+  }
+
+  .timetable-period-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: var(--shadow-xs);
+    transition: transform var(--t-fast), border-color var(--t-fast);
+  }
+  .timetable-period-card.lab {
+    border-left: 4px solid var(--emerald);
+    background: var(--cell-lab-bg);
+  }
+  .timetable-period-card.has-conflict {
+    border-left: 4px solid var(--danger);
+    background: var(--danger-dim);
+  }
+
   /* Mobile table → card conversion */
   .responsive-table-card table,
   .responsive-table-card thead,
@@ -2510,6 +2610,7 @@ select.input-field {
   }
   .responsive-table-card td:last-child {
     border-bottom: none;
+    padding-top: 10px;
   }
   .responsive-table-card td::before {
     content: attr(data-label);
@@ -3325,8 +3426,8 @@ select.input-field {
 /* ── Search Bar Outer Container (480px x 56px, 20px radius) ────────────────── */
 .spotlight-command-bar {
   position: relative;
-  width: 480px;
-  min-height: 56px;
+  width: min(100%, 480px);
+  min-height: 44px;
   border-radius: 20px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);

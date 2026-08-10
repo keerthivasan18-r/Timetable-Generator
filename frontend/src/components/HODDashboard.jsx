@@ -31,6 +31,8 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
   const [conflicts, setConflicts] = useState([]);
 
   const [activeSection, setActiveSection] = useState('1-A');
+  const [timetableMode, setTimetableMode] = useState('grid');
+  const [selectedDayTab, setSelectedDayTab] = useState(1);
   const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -537,104 +539,197 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-              <HelpCircle size={12} />
-              Click any cell to swap the subject assignment.
-            </div>
-
-            <div className="timetable-wrapper">
-              <div className="timetable-grid" style={{ gridTemplateColumns: `110px repeat(${settings.dayOrdersCount || 6}, 1fr)` }}>
-                <div className="timetable-cell header">Time</div>
-                {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, i) => (
-                  <div key={i} className="timetable-cell header">Day {i + 1}</div>
-                ))}
-                {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
-                  const p = pIdx + 1;
-                  const isBreak = p === (settings.breakAfterPeriod || 3) + 1;
-                  return (
-                    <React.Fragment key={pIdx}>
-                      {isBreak && (
-                        <div style={{ gridColumn: `1 / span ${(settings.dayOrdersCount || 6) + 1}` }}>
-                          <div className="timetable-break">
-                            ☕ TEA BREAK — {settings.timings?.break}
-                          </div>
-                        </div>
-                      )}
-                      <div className="timetable-cell header" style={{ flexDirection: 'column', gap: '2px', minHeight: '52px' }}>
-                        <strong style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>P{p}</strong>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
-                          {settings.timings?.[p]?.split(' - ')[0]}
-                        </span>
-                      </div>
-                      {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, dIdx) => {
-                        const day = dIdx + 1;
-                        const cell = timetable.tables[activeSection]?.[day]?.[p];
-                        const isLab = cell?.subjectName?.toLowerCase().includes('lab') || cell?.subjectId === 'CS103';
-                        const isFree = cell?.subjectId === 'FREE';
-                        const hasConflict = conflicts.some(c =>
-                          (c.staffId && c.staffId === cell?.staffId && c.day === day && c.period === p) ||
-                          (c.section === activeSection && c.subjectId === cell?.subjectId && c.type?.includes('allocation'))
-                        );
-                        return (
-                          <div
-                            key={dIdx}
-                            className={`timetable-cell ${isLab ? 'lab' : ''} ${isFree ? 'free' : ''} ${hasConflict ? 'has-conflict' : ''}`}
-                            onClick={() => setEditingCell({ section: activeSection, day, period: p })}
-                            title={cell ? `${cell.subjectName} — ${cell.staffName}` : 'Click to assign'}
-                          >
-                            {!isFree && cell ? (
-                              cell.isOff ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5, padding: '4px' }}>
-                                  <span className="badge badge-gray" style={{ fontSize: '0.62rem' }}>⏹ NO PERIOD</span>
-                                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>{cell.subjectName || 'No Class'}</span>
-                                </div>
-                              ) : cell.isNME ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%', textAlign: 'center' }}>
-                                  <span className="badge badge-indigo" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>⚡ NME Session</span>
-                                  <div style={{ fontWeight: 700, color: 'white', fontSize: '0.75rem' }}>NME (12:40 - 1:30 PM)</div>
-                                  <div style={{ fontSize: '0.6rem', color: 'var(--accent-indigo)' }}>External Faculty</div>
-                                </div>
-                              ) : cell.isElective ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span className="badge badge-purple" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Elective</span>
-                                    <span style={{ fontSize: '0.6rem', color: 'var(--purple-light)' }}>{cell.courses?.length || 2} Subjects</span>
-                                  </div>
-                                  {cell.courses ? (
-                                    cell.courses.map((c, i) => (
-                                      <div key={i} style={{ fontSize: '0.68rem', borderTop: i > 0 ? '1px dashed rgba(255,255,255,0.15)' : 'none', paddingTop: i > 0 ? '3px' : 0 }}>
-                                        <div style={{ fontWeight: 600, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.subjectName}</div>
-                                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>Fac: {c.staffName}</div>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <div className="cell-name">{cell.subjectName}</div>
-                                  )}
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="cell-subject">{cell.subjectId}</div>
-                                  <div className="cell-name">{cell.subjectName}</div>
-                                  <div className="cell-teacher">{cell.staffName}</div>
-                                </>
-                              )
-                            ) : p === 5 && (activeSection === '1-A' || activeSection === '1-B') && (day === 1 || day === 2) ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5, padding: '4px' }}>
-                                <span className="badge badge-gray" style={{ fontSize: '0.62rem' }}>⏹ NO PERIOD</span>
-                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>NME Finish</span>
-                              </div>
-                            ) : (
-                              <div className="cell-subject">{isFree ? 'Study' : '—'}</div>
-                            )}
-                            <div className="cell-period">P{p}</div>
-                          </div>
-                        );
-                      })}
-                    </React.Fragment>
-                  );
-                })}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                <HelpCircle size={12} />
+                Click any slot to swap the subject assignment.
+              </div>
+              <div className="timetable-view-toggle">
+                <button
+                  className={`timetable-view-toggle-btn ${timetableMode === 'grid' ? 'active' : ''}`}
+                  onClick={() => setTimetableMode('grid')}
+                  type="button"
+                >
+                  📊 Grid View
+                </button>
+                <button
+                  className={`timetable-view-toggle-btn ${timetableMode === 'daily' ? 'active' : ''}`}
+                  onClick={() => setTimetableMode('daily')}
+                  type="button"
+                >
+                  📱 Daily Cards
+                </button>
               </div>
             </div>
+
+            {timetableMode === 'grid' ? (
+              <div className="timetable-wrapper">
+                <div className="timetable-grid" style={{ gridTemplateColumns: `110px repeat(${settings.dayOrdersCount || 6}, 1fr)` }}>
+                  <div className="timetable-cell header">Time</div>
+                  {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, i) => (
+                    <div key={i} className="timetable-cell header">Day {i + 1}</div>
+                  ))}
+                  {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
+                    const p = pIdx + 1;
+                    const isBreak = p === (settings.breakAfterPeriod || 3) + 1;
+                    return (
+                      <React.Fragment key={pIdx}>
+                        {isBreak && (
+                          <div style={{ gridColumn: `1 / span ${(settings.dayOrdersCount || 6) + 1}` }}>
+                            <div className="timetable-break">
+                              ☕ TEA BREAK — {settings.timings?.break}
+                            </div>
+                          </div>
+                        )}
+                        <div className="timetable-cell header" style={{ flexDirection: 'column', gap: '2px', minHeight: '52px' }}>
+                          <strong style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>P{p}</strong>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+                            {settings.timings?.[p]?.split(' - ')[0]}
+                          </span>
+                        </div>
+                        {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, dIdx) => {
+                          const day = dIdx + 1;
+                          const cell = timetable.tables[activeSection]?.[day]?.[p];
+                          const isLab = cell?.subjectName?.toLowerCase().includes('lab') || cell?.subjectId === 'CS103';
+                          const isFree = cell?.subjectId === 'FREE';
+                          const hasConflict = conflicts.some(c =>
+                            (c.staffId && c.staffId === cell?.staffId && c.day === day && c.period === p) ||
+                            (c.section === activeSection && c.subjectId === cell?.subjectId && c.type?.includes('allocation'))
+                          );
+                          return (
+                            <div
+                              key={dIdx}
+                              className={`timetable-cell ${isLab ? 'lab' : ''} ${isFree ? 'free' : ''} ${hasConflict ? 'has-conflict' : ''}`}
+                              onClick={() => setEditingCell({ section: activeSection, day, period: p })}
+                              title={cell ? `${cell.subjectName} — ${cell.staffName}` : 'Click to assign'}
+                            >
+                              {!isFree && cell ? (
+                                cell.isOff ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5, padding: '4px' }}>
+                                    <span className="badge badge-gray" style={{ fontSize: '0.62rem' }}>⏹ NO PERIOD</span>
+                                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>{cell.subjectName || 'No Class'}</span>
+                                  </div>
+                                ) : cell.isNME ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%', textAlign: 'center' }}>
+                                    <span className="badge badge-indigo" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>⚡ NME Session</span>
+                                    <div style={{ fontWeight: 700, color: 'white', fontSize: '0.75rem' }}>NME (12:40 - 1:30 PM)</div>
+                                    <div style={{ fontSize: '0.6rem', color: 'var(--accent-indigo)' }}>External Faculty</div>
+                                  </div>
+                                ) : cell.isElective ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                      <span className="badge badge-purple" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Elective</span>
+                                      <span style={{ fontSize: '0.6rem', color: 'var(--purple-light)' }}>{cell.courses?.length || 2} Subjects</span>
+                                    </div>
+                                    {cell.courses ? (
+                                      cell.courses.map((c, i) => (
+                                        <div key={i} style={{ fontSize: '0.68rem', borderTop: i > 0 ? '1px dashed rgba(255,255,255,0.15)' : 'none', paddingTop: i > 0 ? '3px' : 0 }}>
+                                          <div style={{ fontWeight: 600, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.subjectName}</div>
+                                          <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>Fac: {c.staffName}</div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div className="cell-name">{cell.subjectName}</div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="cell-subject">{cell.subjectId}</div>
+                                    <div className="cell-name">{cell.subjectName}</div>
+                                    <div className="cell-teacher">{cell.staffName}</div>
+                                  </>
+                                )
+                              ) : p === 5 && (activeSection === '1-A' || activeSection === '1-B') && (day === 1 || day === 2) ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5, padding: '4px' }}>
+                                  <span className="badge badge-gray" style={{ fontSize: '0.62rem' }}>⏹ NO PERIOD</span>
+                                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>NME Finish</span>
+                                </div>
+                              ) : (
+                                <div className="cell-subject">{isFree ? 'Study' : '—'}</div>
+                              )}
+                              <div className="cell-period">P{p}</div>
+                            </div>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="timetable-mobile-nav">
+                  {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`timetable-mobile-tab ${selectedDayTab === i + 1 ? 'active' : ''}`}
+                      onClick={() => setSelectedDayTab(i + 1)}
+                    >
+                      Day Order {i + 1}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="timetable-daily-cards">
+                  {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
+                    const p = pIdx + 1;
+                    const isBreak = p === (settings.breakAfterPeriod || 3) + 1;
+                    const cell = timetable.tables[activeSection]?.[selectedDayTab]?.[p];
+                    const isLab = cell?.subjectName?.toLowerCase().includes('lab') || cell?.subjectId === 'CS103';
+                    const isFree = cell?.subjectId === 'FREE';
+                    const hasConflict = conflicts.some(c =>
+                      (c.staffId && c.staffId === cell?.staffId && c.day === selectedDayTab && c.period === p) ||
+                      (c.section === activeSection && c.subjectId === cell?.subjectId && c.type?.includes('allocation'))
+                    );
+
+                    return (
+                      <React.Fragment key={pIdx}>
+                        {isBreak && (
+                          <div className="timetable-break" style={{ marginBottom: '12px' }}>
+                            ☕ TEA BREAK — {settings.timings?.break}
+                          </div>
+                        )}
+                        <div
+                          className={`timetable-period-card ${isLab ? 'lab' : ''} ${hasConflict ? 'has-conflict' : ''}`}
+                          onClick={() => setEditingCell({ section: activeSection, day: selectedDayTab, period: p })}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>
+                              Period {p} ({settings.timings?.[p] || '09:00 - 10:00 AM'})
+                            </span>
+                            {hasConflict && (
+                              <span className="badge badge-rose" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <AlertTriangle size={12} /> Conflict
+                              </span>
+                            )}
+                          </div>
+                          {!isFree && cell ? (
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)' }}>{cell.subjectName}</strong>
+                                <span className="badge badge-indigo" style={{ fontSize: '0.65rem', fontFamily: 'JetBrains Mono, monospace' }}>{cell.subjectId}</span>
+                              </div>
+                              <div style={{ fontSize: '0.845rem', color: 'var(--text-secondary)' }}>
+                                Faculty: <strong>{cell.staffName || 'Unassigned'}</strong>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                              {isFree ? 'Free / Study Slot' : '— No Subject Assigned —'}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.72rem', color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                            <Edit size={12} /> Tap to Edit Slot
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="glass-panel" style={{ textAlign: 'center', padding: '60px 24px' }}>

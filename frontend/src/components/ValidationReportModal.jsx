@@ -103,8 +103,8 @@ export default function ValidationReportModal({ isOpen, errors = [], onClose, on
             </div>
 
             {/* Validation Errors Table */}
-            <div style={{ padding: '0 24px', maxHeight: '380px', overflowY: 'auto' }}>
-              <table className="table" style={{ marginTop: '8px' }}>
+            <div style={{ padding: '0 24px', maxHeight: '380px', overflowY: 'auto' }} className="table-container responsive-table-card">
+              <table className="table custom-table" style={{ marginTop: '8px' }}>
                 <thead>
                   <tr>
                     <th style={{ width: '40px' }}>#</th>
@@ -117,21 +117,21 @@ export default function ValidationReportModal({ isOpen, errors = [], onClose, on
                 <tbody>
                   {errors.map((err, idx) => (
                     <tr key={idx}>
-                      <td style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
-                      <td>
+                      <td data-label="#" style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
+                      <td data-label="Rule">
                         <span className="badge badge-rose" style={{ fontSize: '0.7rem' }}>
                           Rule {err.ruleNumber}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Scope">
                         <strong style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                           {err.scope}
                         </strong>
                       </td>
-                      <td style={{ fontSize: '0.825rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                      <td data-label="Conflict Description" style={{ fontSize: '0.825rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>
                         {err.description}
                       </td>
-                      <td style={{ fontSize: '0.825rem', color: 'var(--accent)', fontWeight: 500 }}>
+                      <td data-label="Resolution" style={{ fontSize: '0.825rem', color: 'var(--accent)', fontWeight: 500 }}>
                         {err.action}
                       </td>
                     </tr>

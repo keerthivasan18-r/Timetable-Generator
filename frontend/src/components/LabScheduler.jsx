@@ -330,14 +330,12 @@ export default function LabScheduler() {
                             )}
                             <button
                               className="btn btn-danger btn-icon"
-                              style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, padding: '3px', borderRadius: 'var(--r-sm)', opacity: 0, transition: 'opacity var(--t-fast)' }}
-                              onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                              onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                              style={{ position: 'absolute', top: 4, right: 4, width: 24, height: 24, padding: '3px', borderRadius: 'var(--r-sm)', opacity: 0.85 }}
                               onClick={e => { e.stopPropagation(); removeSlot(activeSection, day, p); }}
                               title="Remove this lab slot"
                               aria-label="Remove lab slot"
                             >
-                              <Trash size={10} />
+                              <Trash size={11} />
                             </button>
                           </>
                         ) : isLab ? (

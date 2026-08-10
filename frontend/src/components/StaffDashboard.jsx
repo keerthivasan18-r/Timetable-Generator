@@ -14,6 +14,8 @@ export default function StaffDashboard({ user }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('timetable');
+  const [timetableMode, setTimetableMode] = useState('grid');
+  const [selectedDayTab, setSelectedDayTab] = useState(1);
 
   // loadData — UNCHANGED
   const loadData = async () => {
@@ -222,81 +224,173 @@ export default function StaffDashboard({ user }) {
               <p style={{ fontSize: '0.845rem' }}>Loading schedule...</p>
             </div>
           ) : hasPublished ? (
-            <div className="timetable-wrapper">
-              <div className="timetable-grid" style={{ gridTemplateColumns: `110px repeat(${settings.dayOrdersCount || 6}, 1fr)` }}>
-                {/* Header row */}
-                <div className="timetable-cell header">Time</div>
-                {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, i) => (
-                  <div key={i} className="timetable-cell header">Day {i + 1}</div>
-                ))}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+                <div className="timetable-view-toggle">
+                  <button
+                    className={`timetable-view-toggle-btn ${timetableMode === 'grid' ? 'active' : ''}`}
+                    onClick={() => setTimetableMode('grid')}
+                    type="button"
+                  >
+                    📊 Grid View
+                  </button>
+                  <button
+                    className={`timetable-view-toggle-btn ${timetableMode === 'daily' ? 'active' : ''}`}
+                    onClick={() => setTimetableMode('daily')}
+                    type="button"
+                  >
+                    📱 Daily Cards
+                  </button>
+                </div>
+              </div>
 
-                {/* Period rows */}
-                {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
-                  const p = pIdx + 1;
-                  const isBreak = p === (settings.breakAfterPeriod || 3) + 1;
-                  return (
-                    <React.Fragment key={pIdx}>
-                      {isBreak && (
-                        <div style={{ gridColumn: `1 / span ${(settings.dayOrdersCount || 6) + 1}` }}>
-                          <div className="timetable-break">
-                            ☕ TEA BREAK — {settings.timings?.break}
+              {timetableMode === 'grid' ? (
+                <div className="timetable-wrapper">
+                  <div className="timetable-grid" style={{ gridTemplateColumns: `110px repeat(${settings.dayOrdersCount || 6}, 1fr)` }}>
+                    {/* Header row */}
+                    <div className="timetable-cell header">Time</div>
+                    {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, i) => (
+                      <div key={i} className="timetable-cell header">Day {i + 1}</div>
+                    ))}
+
+                    {/* Period rows */}
+                    {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
+                      const p = pIdx + 1;
+                      const isBreak = p === (settings.breakAfterPeriod || 3) + 1;
+                      return (
+                        <React.Fragment key={pIdx}>
+                          {isBreak && (
+                            <div style={{ gridColumn: `1 / span ${(settings.dayOrdersCount || 6) + 1}` }}>
+                              <div className="timetable-break">
+                                ☕ TEA BREAK — {settings.timings?.break}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Time header cell */}
+                          <div className="timetable-cell header" style={{ flexDirection: 'column', gap: '2px', minHeight: '52px' }}>
+                            <strong style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>P{p}</strong>
+                            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+                              {settings.timings?.[p]?.split(' - ')[0]}
+                            </span>
                           </div>
-                        </div>
-                      )}
 
-                      {/* Time header cell */}
-                      <div className="timetable-cell header" style={{ flexDirection: 'column', gap: '2px', minHeight: '52px' }}>
-                        <strong style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>P{p}</strong>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
-                          {settings.timings?.[p]?.split(' - ')[0]}
-                        </span>
-                      </div>
+                          {/* Day cells */}
+                          {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, dIdx) => {
+                            const day = dIdx + 1;
+                            const slots = staffSchedule[day]?.[p] || [];
+                            const isTeaching = slots.length > 0;
+                            const firstSlot = slots[0];
+                            const colorScheme = firstSlot ? subjectColorMap[firstSlot.subjectId] : null;
 
-                      {/* Day cells */}
-                      {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, dIdx) => {
-                        const day = dIdx + 1;
-                        const slots = staffSchedule[day]?.[p] || [];
-                        const isTeaching = slots.length > 0;
-                        const firstSlot = slots[0];
-                        const colorScheme = firstSlot ? subjectColorMap[firstSlot.subjectId] : null;
+                            return (
+                              <div
+                                key={dIdx}
+                                className={`timetable-cell ${isTeaching ? 'lab' : 'free'}`}
+                                style={{
+                                  cursor: 'default',
+                                  ...(isTeaching && colorScheme ? {
+                                    background: colorScheme.bg,
+                                    borderLeft: `2px solid ${colorScheme.border}`,
+                                  } : {})
+                                }}
+                              >
+                                {isTeaching ? (
+                                  <>
+                                    <div className="cell-subject" style={{ color: colorScheme?.text || 'var(--blue-light)' }}>
+                                      {firstSlot.subjectId}
+                                    </div>
+                                    <div className="cell-name">{firstSlot.subjectName}</div>
+                                    <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', marginTop: '2px' }}>
+                                      {slots.map(s => (
+                                        <span key={s.section} className="badge" style={{ fontSize: '0.58rem', padding: '1px 5px' }}>
+                                          §{s.section}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="cell-subject" style={{ color: 'var(--cell-free-text)' }}>—</div>
+                                )}
+                                <div className="cell-period">P{p}</div>
+                              </div>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="timetable-mobile-nav">
+                    {Array.from({ length: settings.dayOrdersCount || 6 }).map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`timetable-mobile-tab ${selectedDayTab === i + 1 ? 'active' : ''}`}
+                        onClick={() => setSelectedDayTab(i + 1)}
+                      >
+                        Day Order {i + 1}
+                      </button>
+                    ))}
+                  </div>
 
-                        return (
+                  <div className="timetable-daily-cards">
+                    {Array.from({ length: settings.periodsPerDay || 5 }).map((_, pIdx) => {
+                      const p = pIdx + 1;
+                      const isBreak = p === (settings.breakAfterPeriod || 3) + 1;
+                      const slots = staffSchedule[selectedDayTab]?.[p] || [];
+                      const isTeaching = slots.length > 0;
+                      const firstSlot = slots[0];
+                      const colorScheme = firstSlot ? subjectColorMap[firstSlot.subjectId] : null;
+
+                      return (
+                        <React.Fragment key={pIdx}>
+                          {isBreak && (
+                            <div className="timetable-break" style={{ marginBottom: '12px' }}>
+                              ☕ TEA BREAK — {settings.timings?.break}
+                            </div>
+                          )}
                           <div
-                            key={dIdx}
-                            className={`timetable-cell ${isTeaching ? 'lab' : 'free'}`}
-                            style={{
-                              cursor: 'default',
-                              ...(isTeaching && colorScheme ? {
-                                background: colorScheme.bg,
-                                borderLeft: `2px solid ${colorScheme.border}`,
-                              } : {})
-                            }}
+                            className={`timetable-period-card ${isTeaching ? 'lab' : ''}`}
+                            style={isTeaching && colorScheme ? { borderLeft: `4px solid ${colorScheme.border}`, background: colorScheme.bg } : {}}
                           >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>
+                                Period {p} ({settings.timings?.[p] || '09:00 - 10:00 AM'})
+                              </span>
+                              {isTeaching && (
+                                <span className="badge badge-emerald">Teaching Session</span>
+                              )}
+                            </div>
                             {isTeaching ? (
-                              <>
-                                <div className="cell-subject" style={{ color: colorScheme?.text || 'var(--blue-light)' }}>
-                                  {firstSlot.subjectId}
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                  <strong style={{ fontSize: '0.98rem', color: colorScheme?.text || 'var(--text-heading)' }}>{firstSlot.subjectName}</strong>
+                                  <span className="badge badge-indigo" style={{ fontSize: '0.65rem', fontFamily: 'JetBrains Mono, monospace' }}>{firstSlot.subjectId}</span>
                                 </div>
-                                <div className="cell-name">{firstSlot.subjectName}</div>
-                                <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', marginTop: '2px' }}>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px' }}>
+                                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Assigned Sections:</span>
                                   {slots.map(s => (
-                                    <span key={s.section} className="badge" style={{ fontSize: '0.58rem', padding: '1px 5px' }}>
-                                      §{s.section}
+                                    <span key={s.section} className="badge badge-purple" style={{ fontSize: '0.7rem' }}>
+                                      Section {s.section}
                                     </span>
                                   ))}
                                 </div>
-                              </>
+                              </div>
                             ) : (
-                              <div className="cell-subject" style={{ color: 'var(--cell-free-text)' }}>—</div>
+                              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                                Free Slot / No Class Assigned
+                              </div>
                             )}
-                            <div className="cell-period">P{p}</div>
                           </div>
-                        );
-                      })}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="empty-state">
