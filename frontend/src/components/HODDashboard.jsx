@@ -133,6 +133,7 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
     return subjects.filter(s => s.year === year).reduce((sum, s) => sum + (s.periods || 0), 0);
   };
 
+  const capacity = MAX_WEEKLY_PERIODS;
   const overA = getTotalAllocated('1-A') > getMaxWeeklyPeriods('1-A');
   const overB = getTotalAllocated('1-B') > getMaxWeeklyPeriods('1-B');
   const over2A = getTotalAllocated('2-A') > getMaxWeeklyPeriods('2-A');
