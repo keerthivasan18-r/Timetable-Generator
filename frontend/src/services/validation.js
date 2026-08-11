@@ -2,7 +2,7 @@ export const MAX_WEEKLY_PERIODS = 30;
 
 export function getMaxWeeklyPeriods(yearOrSection) {
   if (yearOrSection === 'First Year' || yearOrSection === '1-A' || yearOrSection === '1-B') {
-    return 28; // 26 core subject slots + 2 NME slots (DO 1,2 P5) = 28 total subject slots
+    return 29; // 29 core subject slots + 1 NME slot (DO 1 P5) = 30 total subject slots
   }
   return 30;
 }
@@ -130,16 +130,20 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
 
   // Rule 7: Faculty Exists
   assignments.forEach(asgn => {
-    if (asgn.staffId && !activeStaffIds.has(asgn.staffId)) {
-      const subj = subjectMap.get(asgn.subjectId);
-      errors.push({
-        section: asgn.section || '-',
-        subject: subj ? `${subj.name} (${subj.id})` : asgn.subjectId || '-',
-        faculty: asgn.staffId,
-        weeklyHours: subj?.periods || 0,
-        type: 'Deleted/Inactive Faculty',
-        error: `Assigned faculty ID "${asgn.staffId}" does not exist in active roster.`
-      });
+    if (asgn.staffId) {
+      const staffIds = asgn.staffId.includes('/') ? asgn.staffId.split('/') : [asgn.staffId];
+      const invalidId = staffIds.find(id => id.trim() && !activeStaffIds.has(id.trim()));
+      if (invalidId) {
+        const subj = subjectMap.get(asgn.subjectId);
+        errors.push({
+          section: asgn.section || '-',
+          subject: subj ? `${subj.name} (${subj.id})` : asgn.subjectId || '-',
+          faculty: asgn.staffId,
+          weeklyHours: subj?.periods || 0,
+          type: 'Deleted/Inactive Faculty',
+          error: `Assigned faculty ID "${invalidId}" does not exist in active roster.`
+        });
+      }
     }
   });
 
@@ -192,7 +196,7 @@ export function validateSchedulerData(staff = [], subjects = [], assignments = [
           faculty: 'Not Assigned',
           weeklyHours: subj.periods || 0,
           type: 'Faculty Missing',
-          error: `Faculty Not Assigned for subject "${subj.name}".`
+          error: `${subj.name} is not assigned to ${sec}.`
         });
       }
     });

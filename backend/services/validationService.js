@@ -15,7 +15,7 @@ export const VALID_SECTIONS = ['1-A', '1-B', '2-A', '2-B', '3-A', '3-B'];
  */
 export function getMaxAllowedCoreHours(secOrYear) {
   if (secOrYear === 'First Year' || secOrYear === '1-A' || secOrYear === '1-B') {
-    return 28;
+    return 29;
   }
   return 30;
 }
@@ -81,16 +81,20 @@ export function validateSchedulerData({ staff = [], subjects = [], assignments =
   // Validation 7 - Faculty Exists (No assignments referencing deleted faculty)
   // ---------------------------------------------------------------------------
   assignments.forEach(asgn => {
-    if (asgn.staffId && !activeStaffIds.has(asgn.staffId)) {
-      const subj = subjectMap.get(asgn.subjectId);
-      errors.push({
-        section: asgn.section || '-',
-        subject: subj ? `${subj.name} (${subj.id})` : asgn.subjectId || '-',
-        faculty: asgn.staffId,
-        weeklyHours: subj?.periods || 0,
-        type: 'Deleted/Inactive Faculty',
-        error: `Assigned faculty ID "${asgn.staffId}" does not exist in the active roster.`
-      });
+    if (asgn.staffId) {
+      const staffIds = asgn.staffId.includes('/') ? asgn.staffId.split('/') : [asgn.staffId];
+      const invalidId = staffIds.find(id => id.trim() && !activeStaffIds.has(id.trim()));
+      if (invalidId) {
+        const subj = subjectMap.get(asgn.subjectId);
+        errors.push({
+          section: asgn.section || '-',
+          subject: subj ? `${subj.name} (${subj.id})` : asgn.subjectId || '-',
+          faculty: asgn.staffId,
+          weeklyHours: subj?.periods || 0,
+          type: 'Deleted/Inactive Faculty',
+          error: `Assigned faculty ID "${invalidId}" does not exist in the active roster.`
+        });
+      }
     }
   });
 
@@ -150,7 +154,7 @@ export function validateSchedulerData({ staff = [], subjects = [], assignments =
           faculty: 'Not Assigned',
           weeklyHours: subj.periods || 0,
           type: 'Faculty Missing',
-          error: `Faculty Not Assigned for subject "${subj.name}".`
+          error: `${subj.name} is not assigned to ${sec}.`
         });
       }
     });

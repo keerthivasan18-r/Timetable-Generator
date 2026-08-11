@@ -65,6 +65,8 @@ const DEFAULT_SUBJECTS = [
   { id: 'CS103', name: 'English', type: 'theory', periods: 4, year: 'First Year' },
   { id: 'CS104', name: 'C++', type: 'theory', periods: 4, year: 'First Year' },
   { id: 'CS105', name: 'C++ Lab', type: 'practical', periods: 4, year: 'First Year' },
+  { id: 'CS106', name: 'Web Development', type: 'theory', periods: 5, year: 'First Year' },
+  { id: 'CS107', name: 'Web Development Lab', type: 'practical', periods: 4, year: 'First Year' },
 
   // Second Year
   { id: 'CS201', name: 'Statistics', type: 'theory', periods: 4, year: 'Second Year' },
@@ -93,6 +95,8 @@ const DEFAULT_ASSIGNMENTS = [
   { section: '1-A', subjectId: 'CS103', staffId: 'STF005' },
   { section: '1-A', subjectId: 'CS104', staffId: 'STF007' },
   { section: '1-A', subjectId: 'CS105', staffId: 'STF007' },
+  { section: '1-A', subjectId: 'CS106', staffId: 'STF007' },
+  { section: '1-A', subjectId: 'CS107', staffId: 'STF007' },
 
   // 1-B
   { section: '1-B', subjectId: 'CS101', staffId: 'STF002' },
@@ -100,6 +104,8 @@ const DEFAULT_ASSIGNMENTS = [
   { section: '1-B', subjectId: 'CS103', staffId: 'STF006' },
   { section: '1-B', subjectId: 'CS104', staffId: 'STF008' },
   { section: '1-B', subjectId: 'CS105', staffId: 'STF008' },
+  { section: '1-B', subjectId: 'CS106', staffId: 'STF008' },
+  { section: '1-B', subjectId: 'CS107', staffId: 'STF008' },
 
   // 2-A
   { section: '2-A', subjectId: 'CS201', staffId: 'STF011' },

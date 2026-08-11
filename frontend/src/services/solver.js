@@ -80,8 +80,8 @@ export function generateTimetable(staff, subjects, assignments, settings, preset
 
         if (nmeStaffId) specialStaffIds.add(nmeStaffId);
 
-        // Day 1 & Day 2 Period 5 (5:40 PM - 6:30 PM): Locked NME
-        [1, 2].forEach(day => {
+        // Day 1 Period 5 (5:40 PM - 6:30 PM): Locked NME
+        [1].forEach(day => {
           if (grid[sec][day] && periodsPerDay >= 5) {
             grid[sec][day][5] = {
               subjectId: nmeSubjectId,
@@ -266,10 +266,10 @@ export function generateTimetable(staff, subjects, assignments, settings, preset
           ).length;
         }
 
-        // Subtract pre-filled NME periods (Day 1 & Day 2 Period 5) for First-Year NME subjects
+        // Subtract pre-filled NME period (Day 1 Period 5) for First-Year NME subjects
         let nmePreFilledCount = 0;
         if (sec.startsWith('1') && (assign.subjectId.includes('NME') || subject.name.toLowerCase().includes('nme') || subject.type === 'nme')) {
-          nmePreFilledCount = 2;
+          nmePreFilledCount = 1;
         }
 
         const remainingPeriods = Math.max(0, subject.periods - presetCount - nmePreFilledCount);
@@ -278,7 +278,19 @@ export function generateTimetable(staff, subjects, assignments, settings, preset
         const isLab = subject.type === 'practical' || subject.id.includes('LAB') || subject.name.toLowerCase().includes('lab');
 
         if (isLab) {
-          const blocks = Math.floor(remainingPeriods / 2);
+          const quads = Math.floor(remainingPeriods / 4);
+          for (let i = 0; i < quads; i++) {
+            labDoubleItems.push({
+              subjectId: subject.id,
+              staffId: assign.staffId,
+              subjectName: subject.name,
+              type: 'lab-quad',
+              periodsCount: 4,
+              totalPeriods: subject.periods
+            });
+          }
+          const remAfterQuad = remainingPeriods % 4;
+          const blocks = Math.floor(remAfterQuad / 2);
           for (let i = 0; i < blocks; i++) {
             labDoubleItems.push({
               subjectId: subject.id,
@@ -289,7 +301,7 @@ export function generateTimetable(staff, subjects, assignments, settings, preset
               totalPeriods: subject.periods
             });
           }
-          const rem = remainingPeriods % 2;
+          const rem = remAfterQuad % 2;
           for (let i = 0; i < rem; i++) {
             singleLabItems.push({
               subjectId: subject.id,
@@ -642,7 +654,50 @@ export function generateTimetable(staff, subjects, assignments, settings, preset
 
       const candidates = [];
 
-      if (item.type === 'lab-double') {
+      if (item.type === 'lab-quad') {
+        // Try continuous 4-period block (e.g. Periods 1-4 or 2-5)
+        for (let i = minSlotIdx; i < slotsList.length; i++) {
+          const { day, period } = slotsList[i];
+          if (period <= periodsPerDay - 3) {
+            if (
+              canPlaceItem(sec, item, day, period) &&
+              canPlaceItem(sec, item, day, period + 1) &&
+              canPlaceItem(sec, item, day, period + 2) &&
+              canPlaceItem(sec, item, day, period + 3)
+            ) {
+              const sc = scoreCandidateSubject(sec, item, day, period, attemptSeed);
+              candidates.push({ slotIndex: i, day, period, score: sc + 50 });
+            }
+          }
+        }
+
+        candidates.sort((a, b) => b.score - a.score);
+
+        for (const cand of candidates) {
+          const { slotIndex, day, period } = cand;
+          placeItem(sec, item, day, period);
+          placeItem(sec, item, day, period + 1);
+          placeItem(sec, item, day, period + 2);
+          placeItem(sec, item, day, period + 3);
+
+          if (solveSection(secIndex, itemIndex + 1, slotIndex)) {
+            return true;
+          }
+
+          unplaceItem(sec, item, day, period);
+          unplaceItem(sec, item, day, period + 1);
+          unplaceItem(sec, item, day, period + 2);
+          unplaceItem(sec, item, day, period + 3);
+        }
+
+        // Fallback: If 4-period continuous block is blocked, try placing as two 2-period contiguous blocks
+        const doubleItem1 = { ...item, type: 'lab-double', periodsCount: 2 };
+        const doubleItem2 = { ...item, type: 'lab-double', periodsCount: 2 };
+        secItems.splice(itemIndex, 1, doubleItem1, doubleItem2);
+        const fbSuccess = solveSection(secIndex, itemIndex, lastPlacedSlotIdx);
+        secItems.splice(itemIndex, 2, item); // Restore original queue item on backtrack
+        if (fbSuccess) return true;
+      } else if (item.type === 'lab-double') {
         for (let i = minSlotIdx; i < slotsList.length; i++) {
           const { day, period } = slotsList[i];
           if (period < periodsPerDay && period !== breakAfterPeriod) {

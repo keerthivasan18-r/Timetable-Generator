@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/db';
 import { generateTimetable, validateTimetable } from '../services/solver';
-import { MAX_WEEKLY_PERIODS, validateSectionPeriods, getSectionsFromYear } from '../services/validation';
+import { MAX_WEEKLY_PERIODS, getMaxWeeklyPeriods, validateSectionPeriods, getSectionsFromYear } from '../services/validation';
 import ActiveUsersPanel from './ActiveUsersPanel';
 import LabScheduler from './LabScheduler';
 import ValidationReportModal from './ValidationReportModal';
@@ -133,13 +133,12 @@ export default function HODDashboard({ activePanel, triggerNotificationReload, o
     return subjects.filter(s => s.year === year).reduce((sum, s) => sum + (s.periods || 0), 0);
   };
 
-  const capacity = MAX_WEEKLY_PERIODS;
-  const overA = getTotalAllocated('1-A') > capacity;
-  const overB = getTotalAllocated('1-B') > capacity;
-  const over2A = getTotalAllocated('2-A') > capacity;
-  const over2B = getTotalAllocated('2-B') > capacity;
-  const over3A = getTotalAllocated('3-A') > capacity;
-  const over3B = getTotalAllocated('3-B') > capacity;
+  const overA = getTotalAllocated('1-A') > getMaxWeeklyPeriods('1-A');
+  const overB = getTotalAllocated('1-B') > getMaxWeeklyPeriods('1-B');
+  const over2A = getTotalAllocated('2-A') > getMaxWeeklyPeriods('2-A');
+  const over2B = getTotalAllocated('2-B') > getMaxWeeklyPeriods('2-B');
+  const over3A = getTotalAllocated('3-A') > getMaxWeeklyPeriods('3-A');
+  const over3B = getTotalAllocated('3-B') > getMaxWeeklyPeriods('3-B');
   const isOverCapacity = overA || overB || over2A || over2B || over3A || over3B;
 
   // Staff CRUD — UNCHANGED

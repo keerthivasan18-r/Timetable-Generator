@@ -50,12 +50,14 @@ export async function seedAcademicData() {
 
     // 2. Subjects Creation (Idempotent)
     const subjectsList = [
-      // First Year (Total 20 core periods + 2 NME slots)
+      // First Year (Total 29 core periods + 1 NME slot = 30 periods)
       { id: 'CS101', name: 'Language', type: 'theory', periods: 4, year: 'First Year' },
       { id: 'CS102', name: 'Mathematics', type: 'theory', periods: 4, year: 'First Year' },
       { id: 'CS103', name: 'English', type: 'theory', periods: 4, year: 'First Year' },
       { id: 'CS104', name: 'C++', type: 'theory', periods: 4, year: 'First Year' },
       { id: 'CS105', name: 'C++ Lab', type: 'practical', periods: 4, year: 'First Year' },
+      { id: 'CS106', name: 'Web Development', type: 'theory', periods: 5, year: 'First Year' },
+      { id: 'CS107', name: 'Web Development Lab', type: 'practical', periods: 4, year: 'First Year' },
 
       // Second Year (Total 30 periods)
       { id: 'CS201', name: 'Statistics', type: 'theory', periods: 4, year: 'Second Year' },
@@ -76,10 +78,6 @@ export async function seedAcademicData() {
       { id: 'CS306', name: 'Information & Data Security', type: 'theory', periods: 4, year: 'Third Year' },
       { id: 'CS307', name: 'Big Data', type: 'theory', periods: 4, year: 'Third Year' }
     ];
-
-    // Clean up old extra First Year subjects (CS106 NME & CS107 Web Dev)
-    await pool.query("DELETE FROM course_assignments WHERE subject_id IN ('CS106', 'CS107') AND section IN ('1-A', '1-B')");
-    await pool.query("DELETE FROM subjects WHERE id IN ('CS106', 'CS107') AND year = 'First Year'");
 
     const subjectMap = {}; // name_year -> id
 
@@ -103,19 +101,23 @@ export async function seedAcademicData() {
 
     // 3. Sections & Faculty Assignments (Idempotent)
     const rawAssignments = [
-      // 1-A (20 core periods)
+      // 1-A (29 core periods)
       { section: '1-A', subjectName: 'Language', year: 'First Year', facultyName: 'Murugan' },
       { section: '1-A', subjectName: 'Mathematics', year: 'First Year', facultyName: 'Vijaya' },
       { section: '1-A', subjectName: 'English', year: 'First Year', facultyName: 'Archana' },
       { section: '1-A', subjectName: 'C++', year: 'First Year', facultyName: 'Tamilarasi' },
       { section: '1-A', subjectName: 'C++ Lab', year: 'First Year', facultyName: 'Tamilarasi' },
+      { section: '1-A', subjectName: 'Web Development', year: 'First Year', facultyName: 'Tamilarasi' },
+      { section: '1-A', subjectName: 'Web Development Lab', year: 'First Year', facultyName: 'Tamilarasi' },
 
-      // 1-B (20 core periods)
+      // 1-B (29 core periods)
       { section: '1-B', subjectName: 'Language', year: 'First Year', facultyName: 'Vadivelmurugan' },
       { section: '1-B', subjectName: 'Mathematics', year: 'First Year', facultyName: 'Raja' },
       { section: '1-B', subjectName: 'English', year: 'First Year', facultyName: 'Vidhya' },
       { section: '1-B', subjectName: 'C++', year: 'First Year', facultyName: 'Srilakshmi' },
       { section: '1-B', subjectName: 'C++ Lab', year: 'First Year', facultyName: 'Srilakshmi' },
+      { section: '1-B', subjectName: 'Web Development', year: 'First Year', facultyName: 'Srilakshmi' },
+      { section: '1-B', subjectName: 'Web Development Lab', year: 'First Year', facultyName: 'Srilakshmi' },
 
       // 2-A
       { section: '2-A', subjectName: 'Statistics', year: 'Second Year', facultyName: 'Indhu' },
